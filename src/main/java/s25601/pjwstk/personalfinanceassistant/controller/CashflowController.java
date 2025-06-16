@@ -41,30 +41,68 @@ public class CashflowController {
     }
 
     @GetMapping
-    public String listCashflows(Model model) {
+    public String listCashflows(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String account,
+            Model model) {
+
         User user = getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
 
-        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
-        model.addAttribute("cashflows", cashflows);
+        List<Cashflow> allCashflows = cashflowRepository.findByUserId(user.getId());
 
-        BigDecimal incomeTotal = cashflows.stream()
+        List<Cashflow> filtered = allCashflows.stream().filter(cf -> {
+            boolean match = true;
+            if (type != null && !type.isEmpty()) {
+                match &= cf.getType().name().equalsIgnoreCase(type);
+            }
+            if (category != null && !category.isEmpty()) {
+                String cat = cf.getType() == CashflowType.INCOME ?
+                        (cf.getIncomeCategory() != null ? cf.getIncomeCategory().name() : "") :
+                        (cf.getExpenseCategory() != null ? cf.getExpenseCategory().name() : "");
+                match &= cat.toLowerCase().contains(category.toLowerCase());
+            }
+            if (date != null && !date.isEmpty()) {
+                match &= cf.getDate().toString().equals(date);
+            }
+            if (account != null && !account.isEmpty()) {
+                match &= cf.getAccount() != null &&
+                        cf.getAccount().getName().toLowerCase().contains(account.toLowerCase());
+            }
+            return match;
+        }).toList();
+
+        BigDecimal filteredTotal = filtered.stream()
+                .map(Cashflow::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal incomeTotal = filtered.stream()
                 .filter(c -> c.getType() == CashflowType.INCOME)
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal expenseTotal = cashflows.stream()
+        BigDecimal expenseTotal = filtered.stream()
                 .filter(c -> c.getType() == CashflowType.EXPENSE)
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal netTotal = incomeTotal.subtract(expenseTotal);
 
+        model.addAttribute("cashflows", filtered);
+        model.addAttribute("filteredTotal", filteredTotal);
         model.addAttribute("incomeTotal", incomeTotal);
         model.addAttribute("expenseTotal", expenseTotal);
         model.addAttribute("netTotal", netTotal);
+
+        // Pass filter params back to view for form repopulation
+        model.addAttribute("selectedType", type);
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedDate", date);
+        model.addAttribute("selectedAccount", account);
 
         return "cashflow_list";
     }
@@ -86,7 +124,6 @@ public class CashflowController {
         List<Account> accounts = accountRepository.findByUserId(user.getId());
         model.addAttribute("accounts", accounts);
 
-        // Add income and expense categories
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
@@ -119,16 +156,14 @@ public class CashflowController {
 
         cashflow.setUser(user);
 
-        // Update account balance only for INCOME, NOT for EXPENSE
         if (cashflow.getAccount() != null && cashflow.getAmount() != null) {
             Account account = cashflow.getAccount();
             if (cashflow.getType() == CashflowType.INCOME) {
                 account.setBalance(account.getBalance().add(cashflow.getAmount()));
-                cashflow.setExpenseCategory(null);  // clear unused
+                cashflow.setExpenseCategory(null);
                 accountRepository.save(account);
             } else if (cashflow.getType() == CashflowType.EXPENSE) {
-                // Do NOT update account balance for expenses
-                cashflow.setIncomeCategory(null);  // clear unused
+                cashflow.setIncomeCategory(null);
             }
         }
 
@@ -146,18 +181,15 @@ public class CashflowController {
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
         if (cashflow == null || !cashflow.getUser().getId().equals(user.getId())) {
-            // cashflow not found or does not belong to current user
             return "redirect:/cashflow";
         }
 
         Account account = cashflow.getAccount();
         if (account != null && cashflow.getAmount() != null) {
-            // Reverse only INCOME cashflow effect on account balance before deleting
             if (cashflow.getType() == CashflowType.INCOME) {
                 account.setBalance(account.getBalance().subtract(cashflow.getAmount()));
                 accountRepository.save(account);
             }
-            // Do NOT reverse expenses on account balance
         }
 
         cashflowRepository.delete(cashflow);
@@ -219,7 +251,7 @@ public class CashflowController {
             accountRepository.save(oldAccount);
         }
 
-        // Update existingCashflow fields with updatedCashflow values
+        // Update fields
         existingCashflow.setDescription(updatedCashflow.getDescription());
         existingCashflow.setType(updatedCashflow.getType());
         existingCashflow.setAmount(updatedCashflow.getAmount());
