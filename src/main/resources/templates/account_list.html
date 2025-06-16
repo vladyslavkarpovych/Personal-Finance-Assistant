@@ -13,6 +13,7 @@
         <th>Name</th>
         <th>Currency</th>
         <th>Balance</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody>
@@ -20,6 +21,14 @@
         <td th:text="${account.name}"></td>
         <td th:text="${account.currency}"></td>
         <td th:text="${account.balance}"></td>
+        <td>
+            <a th:href="@{/accounts/edit/{id}(id=${account.id})}">Edit</a> |
+            <form th:action="@{/accounts/delete/{id}(id=${account.id})}" method="post"
+                  th:onsubmit="return confirm('Are you sure you want to delete this account?');"
+                  style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
     </tr>
     </tbody>
 </table>
