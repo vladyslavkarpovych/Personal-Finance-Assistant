@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Your Profile</title>
+</head>
+<body>
+
+<h2>Your Profile</h2>
+
+<p><strong>Username:</strong> <span th:text="${user.username}"></span></p>
+<p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
+<p><a th:href="@{/accounts}">View Your Accounts</a></p>
+<a href="/">Logout</a>
+
+<h3>Your Cashflows</h3>
+
+<!-- ADD THIS LINK -->
+<p><a th:href="@{/cashflow/add}">Add New Transaction</a></p>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Account</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="cf : ${cashflows}">
+        <td th:text="${cf.description}">Description</td>
+        <td th:text="${cf.type}">Type</td>
+        <td th:text="${cf.amount}">Amount</td>
+        <td th:text="${cf.date}">Date</td>
+        <td th:text="${cf.account.name}">Account</td>
+        <td>
+            <form th:action="@{'/cashflow/delete/' + ${cf.id}}" method="post" style="display:inline">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this transaction?');">Delete</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+
+</table>
+
+<p><strong>Total Income:</strong> <span th:text="${totalIncome}">0</span></p>
+<p><strong>Total Expense:</strong> <span th:text="${totalExpense}">0</span></p>
+<p><strong>Net Total:</strong> <span th:text="${netTotal}">0</span></p>
+
+</body>
+</html>

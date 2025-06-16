@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Your Cashflow</title>
+</head>
+<body>
+<h2>Your Cashflow</h2>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Account</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="cashflow : ${cashflows}">
+        <td th:text="${cashflow.description}"></td>
+        <td th:text="${cashflow.type}"></td>
+        <td th:text="${cashflow.amount}"></td>
+        <td th:text="${cashflow.date}"></td>
+        <td th:text="${cashflow.account != null ? cashflow.account.name + ' (' + cashflow.account.currency + ')' : 'N/A'}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<p><a th:href="@{/cashflow/add}">Add New Cashflow</a></p>
+<p><a th:href="@{/profile}">Back to Profile</a></p>
+
+</body>
+</html>

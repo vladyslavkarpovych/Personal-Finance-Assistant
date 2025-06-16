@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Your Accounts</title></head>
+<body>
+
+<h2>Your Accounts</h2>
+
+<a th:href="@{/accounts/create}">+ Create New Account</a>
+
+<table border="1" cellpadding="8" style="margin-top: 10px;">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Currency</th>
+        <th>Balance</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="account : ${accounts}">
+        <td th:text="${account.name}"></td>
+        <td th:text="${account.currency}"></td>
+        <td th:text="${account.balance}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/profile}">← Back to Profile</a>
+
+</body>
+</html>
