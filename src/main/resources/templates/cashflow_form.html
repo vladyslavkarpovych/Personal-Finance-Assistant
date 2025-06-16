@@ -29,7 +29,7 @@
 <body>
 <h2>Add Cashflow</h2>
 
-<form th:action="@{/cashflow/add}" th:object="${cashflow}" method="post">
+<form th:action="@{${cashflow.id} != null ? '/cashflow/edit/' + ${cashflow.id} : '/cashflow/add'}" th:object="${cashflow}" method="post">
     <div>
         <label for="description">Description:</label>
         <input id="description" type="text" th:field="*{description}" required />
@@ -91,7 +91,7 @@
         <div th:if="${#fields.hasErrors('account')}" th:errors="*{account}"></div>
     </div>
 
-    <button type="submit">Add Cashflow</button>
+    <button type="submit" th:text="${cashflow.id} != null ? 'Update Cashflow' : 'Add Cashflow'">Submit</button>
 </form>
 
 <p><a th:href="@{/cashflow}">Back to list</a></p>

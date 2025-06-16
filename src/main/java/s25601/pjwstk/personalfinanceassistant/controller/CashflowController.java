@@ -134,7 +134,7 @@ public class CashflowController {
 
         cashflowRepository.save(cashflow);
 
-        return "redirect:/cashflow";
+        return "redirect:/profile";
     }
 
     @PostMapping("/delete/{id}")
@@ -165,4 +165,85 @@ public class CashflowController {
         return "redirect:/profile";
     }
 
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        User user = getCurrentUser();
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
+        if (cashflow == null || !cashflow.getUser().getId().equals(user.getId())) {
+            return "redirect:/cashflow";
+        }
+
+        model.addAttribute("cashflow", cashflow);
+        model.addAttribute("types", CashflowType.values());
+
+        List<Account> accounts = accountRepository.findByUserId(user.getId());
+        model.addAttribute("accounts", accounts);
+
+        model.addAttribute("incomeCategories", IncomeCategory.values());
+        model.addAttribute("expenseCategories", ExpenseCategory.values());
+
+        return "cashflow_form";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String updateCashflow(@PathVariable Long id,
+                                 @Valid @ModelAttribute("cashflow") Cashflow updatedCashflow,
+                                 BindingResult result,
+                                 Model model) {
+        User user = getCurrentUser();
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        if (result.hasErrors()) {
+            model.addAttribute("types", CashflowType.values());
+            model.addAttribute("accounts", accountRepository.findByUserId(user.getId()));
+            model.addAttribute("incomeCategories", IncomeCategory.values());
+            model.addAttribute("expenseCategories", ExpenseCategory.values());
+            return "cashflow_form";
+        }
+
+        Cashflow existingCashflow = cashflowRepository.findById(id).orElse(null);
+        if (existingCashflow == null || !existingCashflow.getUser().getId().equals(user.getId())) {
+            return "redirect:/profile";
+        }
+
+        // Reverse old income effect if needed
+        Account oldAccount = existingCashflow.getAccount();
+        if (oldAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
+            oldAccount.setBalance(oldAccount.getBalance().subtract(existingCashflow.getAmount()));
+            accountRepository.save(oldAccount);
+        }
+
+        // Update existingCashflow fields with updatedCashflow values
+        existingCashflow.setDescription(updatedCashflow.getDescription());
+        existingCashflow.setType(updatedCashflow.getType());
+        existingCashflow.setAmount(updatedCashflow.getAmount());
+        existingCashflow.setDate(updatedCashflow.getDate());
+
+        if (updatedCashflow.getAccount() != null && updatedCashflow.getAccount().getId() != null) {
+            Account newAccount = accountRepository.findById(updatedCashflow.getAccount().getId()).orElse(null);
+            existingCashflow.setAccount(newAccount);
+        } else {
+            existingCashflow.setAccount(null);
+        }
+
+        existingCashflow.setIncomeCategory(updatedCashflow.getIncomeCategory());
+        existingCashflow.setExpenseCategory(updatedCashflow.getExpenseCategory());
+
+        cashflowRepository.save(existingCashflow);
+
+        // Apply new income effect if applicable
+        Account newAccount = existingCashflow.getAccount();
+        if (newAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
+            newAccount.setBalance(newAccount.getBalance().add(existingCashflow.getAmount()));
+            accountRepository.save(newAccount);
+        }
+
+        return "redirect:/profile";
+    }
 }
