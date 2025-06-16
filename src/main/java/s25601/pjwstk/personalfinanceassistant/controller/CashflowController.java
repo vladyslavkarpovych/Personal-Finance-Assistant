@@ -64,14 +64,14 @@ public class CashflowController {
                 String cat = cf.getType() == CashflowType.INCOME ?
                         (cf.getIncomeCategory() != null ? cf.getIncomeCategory().name() : "") :
                         (cf.getExpenseCategory() != null ? cf.getExpenseCategory().name() : "");
-                match &= cat.toLowerCase().contains(category.toLowerCase());
+                match &= cat.equalsIgnoreCase(category);
             }
             if (date != null && !date.isEmpty()) {
                 match &= cf.getDate().toString().equals(date);
             }
             if (account != null && !account.isEmpty()) {
                 match &= cf.getAccount() != null &&
-                        cf.getAccount().getName().toLowerCase().contains(account.toLowerCase());
+                        cf.getAccount().getName().equalsIgnoreCase(account);
             }
             return match;
         }).toList();
@@ -97,6 +97,13 @@ public class CashflowController {
         model.addAttribute("incomeTotal", incomeTotal);
         model.addAttribute("expenseTotal", expenseTotal);
         model.addAttribute("netTotal", netTotal);
+
+        // Add these for dropdown options
+        model.addAttribute("incomeCategories", IncomeCategory.values());
+        model.addAttribute("expenseCategories", ExpenseCategory.values());
+
+        List<Account> accounts = accountRepository.findByUserId(user.getId());
+        model.addAttribute("accounts", accounts);
 
         // Pass filter params back to view for form repopulation
         model.addAttribute("selectedType", type);

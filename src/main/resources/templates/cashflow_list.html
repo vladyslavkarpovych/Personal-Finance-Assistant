@@ -9,15 +9,31 @@
 
 <form th:action="@{/cashflow}" method="get">
     <label>Type:
-        <select name="type">
-            <option value="">All</option>
+        <select name="type" th:onchange="this.form.submit()">
+            <option value="" th:selected="${selectedType == null or selectedType == ''}">All</option>
             <option value="INCOME" th:selected="${selectedType == 'INCOME'}">INCOME</option>
             <option value="EXPENSE" th:selected="${selectedType == 'EXPENSE'}">EXPENSE</option>
         </select>
     </label>
 
     <label>Category:
-        <input type="text" name="category" th:value="${selectedCategory}" placeholder="Category"/>
+        <select name="category">
+            <option value="" th:selected="${selectedCategory == null or selectedCategory == ''}">All</option>
+            <optgroup label="Income Categories" th:if="${selectedType == null or selectedType == '' or selectedType == 'INCOME'}">
+                <option th:each="cat : ${incomeCategories}"
+                        th:value="${cat.name()}"
+                        th:text="${cat.name()}"
+                        th:selected="${selectedCategory == cat.name()}">
+                </option>
+            </optgroup>
+            <optgroup label="Expense Categories" th:if="${selectedType == null or selectedType == '' or selectedType == 'EXPENSE'}">
+                <option th:each="cat : ${expenseCategories}"
+                        th:value="${cat.name()}"
+                        th:text="${cat.name()}"
+                        th:selected="${selectedCategory == cat.name()}">
+                </option>
+            </optgroup>
+        </select>
     </label>
 
     <label>Date:
@@ -25,7 +41,14 @@
     </label>
 
     <label>Account:
-        <input type="text" name="account" th:value="${selectedAccount}" placeholder="Account"/>
+        <select name="account">
+            <option value="" th:selected="${selectedAccount == null or selectedAccount == ''}">All</option>
+            <option th:each="acc : ${accounts}"
+                    th:value="${acc.name}"
+                    th:text="${acc.name + ' (' + acc.currency + ')'}"
+                    th:selected="${selectedAccount == acc.name}">
+            </option>
+        </select>
     </label>
 
     <button type="submit">Filter</button>

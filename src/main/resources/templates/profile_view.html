@@ -13,14 +13,17 @@
 
 <h3>Your Cashflows</h3>
 
-<p><a th:href="@{/cashflow/add}">Add New Transaction</a></p>
+<p>
+    <a th:href="@{/cashflow/add}" style="margin-right: 15px;">Add New Transaction</a>
+    <a th:href="@{/cashflow}">View All Transactions</a>
+</p>
 
 <table border="1">
     <thead>
     <tr>
         <th>Description</th>
         <th>Type</th>
-        <th>Category</th> <!-- New Category column -->
+        <th>Category</th>
         <th>Amount</th>
         <th>Date</th>
         <th>Account</th>
