@@ -11,18 +11,27 @@
     <tr>
         <th>Description</th>
         <th>Type</th>
+        <th>Category</th> <!-- New Category column -->
         <th>Amount</th>
         <th>Date</th>
         <th>Account</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="cashflow : ${cashflows}">
         <td th:text="${cashflow.description}"></td>
         <td th:text="${cashflow.type}"></td>
+        <td th:text="${cashflow.type.name() == 'INCOME' ? cashflow.incomeCategory : cashflow.expenseCategory}">N/A</td>
         <td th:text="${cashflow.amount}"></td>
         <td th:text="${cashflow.date}"></td>
         <td th:text="${cashflow.account != null ? cashflow.account.name + ' (' + cashflow.account.currency + ')' : 'N/A'}"></td>
+        <td>
+            <a th:href="@{/cashflow/edit/{id}(id=${cashflow.id})}">Edit</a> |
+            <form th:action="@{/cashflow/delete/{id}(id=${cashflow.id})}" method="post" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
     </tr>
     </tbody>
 </table>

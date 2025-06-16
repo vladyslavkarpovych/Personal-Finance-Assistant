@@ -11,10 +11,8 @@
 <p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
 <p><a th:href="@{/accounts}">View Your Accounts</a></p>
 
-
 <h3>Your Cashflows</h3>
 
-<!-- ADD THIS LINK -->
 <p><a th:href="@{/cashflow/add}">Add New Transaction</a></p>
 
 <table border="1">
@@ -22,6 +20,7 @@
     <tr>
         <th>Description</th>
         <th>Type</th>
+        <th>Category</th> <!-- New Category column -->
         <th>Amount</th>
         <th>Date</th>
         <th>Account</th>
@@ -32,6 +31,7 @@
     <tr th:each="cf : ${cashflows}">
         <td th:text="${cf.description}">Description</td>
         <td th:text="${cf.type}">Type</td>
+        <td th:text="${cf.type.name() == 'INCOME' ? cf.incomeCategory : cf.expenseCategory}">N/A</td>
         <td th:text="${cf.amount}">Amount</td>
         <td th:text="${cf.date}">Date</td>
         <td th:text="${cf.account.name}">Account</td>
@@ -46,7 +46,6 @@
         </td>
     </tr>
     </tbody>
-
 </table>
 
 <p><strong>Total Income:</strong> <span th:text="${totalIncome}">0</span></p>
