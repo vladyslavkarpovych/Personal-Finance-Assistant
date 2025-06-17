@@ -1,0 +1,138 @@
+package s25601.pjwstk.personalfinanceassistant.controller;
+
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import s25601.pjwstk.personalfinanceassistant.model.*;
+import s25601.pjwstk.personalfinanceassistant.repository.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Controller
+@RequestMapping("/budgets")
+public class BudgetController {
+
+    @Autowired
+    private BudgetRepository budgetRepository;
+
+    @Autowired
+    private CashflowRepository cashflowRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof org.springframework.security.core.userdetails.User userDetails) {
+            return userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        }
+        return null;
+    }
+
+    @GetMapping
+    public String listBudgets(Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        List<Budget> budgets = budgetRepository.findByUser(user);
+
+        // For each budget, calculate remaining
+        for (Budget b : budgets) {
+            BigDecimal spent = cashflowRepository.findByUserId(user.getId()).stream()
+                    .filter(cf -> cf.getType() == CashflowType.EXPENSE)
+                    .filter(cf -> cf.getExpenseCategory() == b.getCategory())
+                    .map(Cashflow::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            b.setRemaining(b.getLimitAmount().subtract(spent));
+        }
+
+        model.addAttribute("budgets", budgets);
+        return "budget_list";
+    }
+
+    @GetMapping("/add")
+    public String showAddForm(Model model) {
+        model.addAttribute("budget", new Budget());
+        model.addAttribute("categories", ExpenseCategory.values());
+        model.addAttribute("periods", BudgetPeriod.values());
+        return "budget_form";
+    }
+
+    @PostMapping("/add")
+    public String addBudget(@Valid @ModelAttribute Budget budget, BindingResult result, Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        if (result.hasErrors()) {
+            model.addAttribute("categories", ExpenseCategory.values());
+            model.addAttribute("periods", BudgetPeriod.values());
+            return "budget_form";
+        }
+
+        budget.setUser(user);
+        budgetRepository.save(budget);
+        return "redirect:/budgets";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteBudget(@PathVariable Long id) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        Budget budget = budgetRepository.findById(id).orElse(null);
+        if (budget != null && budget.getUser().getId().equals(user.getId())) {
+            budgetRepository.delete(budget);
+        }
+
+        return "redirect:/profile";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        Budget budget = budgetRepository.findById(id).orElse(null);
+        if (budget == null || !budget.getUser().getId().equals(user.getId())) {
+            return "redirect:/budgets"; // or error page
+        }
+
+        model.addAttribute("budget", budget);
+        model.addAttribute("categories", ExpenseCategory.values());
+        model.addAttribute("periods", BudgetPeriod.values());
+        return "budget_form";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String updateBudget(@PathVariable Long id, @Valid @ModelAttribute Budget budget, BindingResult result, Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        if (result.hasErrors()) {
+            model.addAttribute("categories", ExpenseCategory.values());
+            model.addAttribute("periods", BudgetPeriod.values());
+            return "budget_form";
+        }
+
+        Budget existingBudget = budgetRepository.findById(id).orElse(null);
+        if (existingBudget == null || !existingBudget.getUser().getId().equals(user.getId())) {
+            return "redirect:/budgets"; // or error page
+        }
+
+        // Update fields
+        existingBudget.setCategory(budget.getCategory());
+        existingBudget.setLimitAmount(budget.getLimitAmount());
+        existingBudget.setPeriod(budget.getPeriod());
+
+        budgetRepository.save(existingBudget);
+
+        return "redirect:/budgets";
+    }
+
+}

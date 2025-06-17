@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Your Budgets</title>
+</head>
+<body>
+
+<h2>Your Budgets</h2>
+<p><a th:href="@{/budgets/add}">Add New Budget</a></p>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Category</th>
+        <th>Limit</th>
+        <th>Period</th>
+        <th>Remaining</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="b : ${budgets}">
+        <td th:text="${b.category}">Category</td>
+        <td th:text="${b.limitAmount}">Amount</td>
+        <td th:text="${b.period}">Period</td>
+        <td th:text="${b.remaining}">Remaining</td>
+        <td>
+            <form th:action="@{'/budgets/edit/' + ${b.id}}" method="get" style="display:inline">
+                <button type="submit">Edit</button>
+            </form>
+            |
+            <form th:action="@{/budgets/delete/{id}(id=${b.id})}" method="post" style="display:inline">
+                <button type="submit" onclick="return confirm('Delete this budget?')">Delete</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a href="/profile">Back to Profile</a>
+</body>
+</html>

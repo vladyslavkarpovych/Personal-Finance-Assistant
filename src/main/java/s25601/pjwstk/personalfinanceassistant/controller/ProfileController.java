@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import s25601.pjwstk.personalfinanceassistant.model.*;
-import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
-import s25601.pjwstk.personalfinanceassistant.repository.ProfileRepository;
-import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
-import s25601.pjwstk.personalfinanceassistant.repository.CashflowRepository;
+import s25601.pjwstk.personalfinanceassistant.repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,6 +33,9 @@ public class ProfileController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @GetMapping("")
     public String showUserProfile(Model model) {
@@ -73,6 +73,19 @@ public class ProfileController {
         model.addAttribute("totalIncome", totalIncome);
         model.addAttribute("totalExpense", totalExpense);
         model.addAttribute("netTotal", netTotal);
+
+        // Fetch user's budgets and calculate remaining
+        List<Budget> budgets = budgetRepository.findByUser(user);
+        for (Budget budget : budgets) {
+            BigDecimal spent = cashflowRepository.findByUserId(user.getId()).stream()
+                    .filter(cf -> cf.getType() == CashflowType.EXPENSE)
+                    .filter(cf -> cf.getExpenseCategory() == budget.getCategory())
+                    .map(Cashflow::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            budget.setRemaining(budget.getLimitAmount().subtract(spent));
+        }
+        model.addAttribute("budgets", budgets);
 
         return "profile_view";
     }

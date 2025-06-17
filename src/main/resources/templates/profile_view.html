@@ -55,6 +55,43 @@
 <p><strong>Total Expense:</strong> <span th:text="${totalExpense}">0</span></p>
 <p><strong>Net Total:</strong> <span th:text="${netTotal}">0</span></p>
 
+<!-- Budgets -->
+<h3>Your Budgets</h3>
+
+<p>
+    <a th:href="@{/budgets/add}" style="margin-right: 15px;">Add New Budget</a>
+    <a th:href="@{/budgets}">View All Budgets</a>
+</p>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Period</th>
+        <th>Remaining</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="budget : ${budgets}">
+        <td th:text="${budget.category}">Category</td>
+        <td th:text="${budget.limitAmount}">Amount</td>
+        <td th:text="${budget.period}">Monthly</td>
+        <td th:text="${budget.remaining}">Remaining</td>
+        <td>
+            <form th:action="@{'/budgets/edit/' + ${budget.id}}" method="get" style="display:inline">
+                <button type="submit">Edit</button>
+            </form>
+            |
+            <form th:action="@{'/budgets/delete/' + ${budget.id}}" method="post" style="display:inline">
+                <button type="submit" onclick="return confirm('Delete this budget?');">Delete</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
 <a href="/">Logout</a>
 </body>
 </html>
