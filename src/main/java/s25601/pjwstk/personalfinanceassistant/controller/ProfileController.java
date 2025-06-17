@@ -14,8 +14,10 @@ import s25601.pjwstk.personalfinanceassistant.repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -49,42 +51,47 @@ public class ProfileController {
 
         model.addAttribute("user", user);
 
-        // Fetch user's cashflows
         List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
         model.addAttribute("cashflows", cashflows);
 
-        // Fetch user's accounts
         List<Account> accounts = accountRepository.findByUserId(user.getId());
 
-        // Total income = total account balances
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Total expense = sum of expense-type cashflows
         BigDecimal totalExpense = cashflows.stream()
                 .filter(cf -> cf.getType() == CashflowType.EXPENSE)
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Net total = income - expense
         BigDecimal netTotal = totalIncome.subtract(totalExpense);
 
         model.addAttribute("totalIncome", totalIncome);
         model.addAttribute("totalExpense", totalExpense);
         model.addAttribute("netTotal", netTotal);
 
-        // Fetch user's budgets and calculate remaining
         List<Budget> budgets = budgetRepository.findByUser(user);
+        LocalDate today = LocalDate.now();
+
         for (Budget budget : budgets) {
+            LocalDate[] periodRange = BudgetPeriodUtil.getPeriodStartEnd(budget.getPeriod(), today);
+            LocalDate startDate = periodRange[0];
+            LocalDate endDate = periodRange[1];
+
             BigDecimal spent = cashflowRepository.findByUserId(user.getId()).stream()
                     .filter(cf -> cf.getType() == CashflowType.EXPENSE)
                     .filter(cf -> cf.getExpenseCategory() == budget.getCategory())
+                    .filter(cf -> {
+                        LocalDate date = cf.getDate();
+                        return (date != null) && (!date.isBefore(startDate)) && (!date.isAfter(endDate));
+                    })
                     .map(Cashflow::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             budget.setRemaining(budget.getLimitAmount().subtract(spent));
         }
+
         model.addAttribute("budgets", budgets);
 
         return "profile_view";

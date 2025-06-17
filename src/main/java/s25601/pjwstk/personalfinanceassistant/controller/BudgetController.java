@@ -10,8 +10,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -41,14 +43,24 @@ public class BudgetController {
         if (user == null) return "redirect:/login";
 
         List<Budget> budgets = budgetRepository.findByUser(user);
+        LocalDate today = LocalDate.now();
 
-        // For each budget, calculate remaining
         for (Budget b : budgets) {
+            // Calculate period start and end dates
+            LocalDate[] periodRange = BudgetPeriodUtil.getPeriodStartEnd(b.getPeriod(), today);
+            LocalDate startDate = periodRange[0];
+            LocalDate endDate = periodRange[1];
+
             BigDecimal spent = cashflowRepository.findByUserId(user.getId()).stream()
                     .filter(cf -> cf.getType() == CashflowType.EXPENSE)
                     .filter(cf -> cf.getExpenseCategory() == b.getCategory())
+                    .filter(cf -> {
+                        LocalDate date = cf.getDate();
+                        return (date != null) && (!date.isBefore(startDate)) && (!date.isAfter(endDate));
+                    })
                     .map(Cashflow::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             b.setRemaining(b.getLimitAmount().subtract(spent));
         }
 
