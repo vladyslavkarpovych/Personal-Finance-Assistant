@@ -17,7 +17,6 @@ public class BudgetPeriodUtil {
                 end = referenceDate;
                 break;
             case WEEKLY:
-                // Assuming week starts Monday
                 start = referenceDate.with(DayOfWeek.MONDAY);
                 end = referenceDate.with(DayOfWeek.SUNDAY);
                 break;
@@ -30,11 +29,18 @@ public class BudgetPeriodUtil {
                 end = referenceDate.with(TemporalAdjusters.lastDayOfYear());
                 break;
             default:
-                // Default to monthly as fallback
                 start = referenceDate.with(TemporalAdjusters.firstDayOfMonth());
                 end = referenceDate.with(TemporalAdjusters.lastDayOfMonth());
         }
 
         return new LocalDate[]{start, end};
+    }
+
+    public static boolean isInBudgetPeriod(LocalDate transactionDate, BudgetPeriod period) {
+        LocalDate today = LocalDate.now();
+        LocalDate[] periodRange = getPeriodStartEnd(period, today);
+        LocalDate start = periodRange[0];
+        LocalDate end = periodRange[1];
+        return !transactionDate.isBefore(start) && !transactionDate.isAfter(end);
     }
 }

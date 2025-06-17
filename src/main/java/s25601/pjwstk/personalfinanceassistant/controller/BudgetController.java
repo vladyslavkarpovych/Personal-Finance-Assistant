@@ -10,6 +10,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
@@ -28,6 +29,9 @@ public class BudgetController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -62,6 +66,15 @@ public class BudgetController {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             b.setRemaining(b.getLimitAmount().subtract(spent));
+
+            // Notify if budget exceeded
+            if (b.getRemaining().compareTo(BigDecimal.ZERO) < 0) {
+                notificationService.notifyBudgetExceeded(user,
+                        b.getCategory().name(),
+                        b.getPeriod().name(),
+                        b.getLimitAmount().toString(),
+                        spent.toString());
+            }
         }
 
         model.addAttribute("budgets", budgets);
@@ -146,5 +159,4 @@ public class BudgetController {
 
         return "redirect:/budgets";
     }
-
 }

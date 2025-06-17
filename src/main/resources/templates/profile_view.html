@@ -92,6 +92,16 @@
     </tbody>
 </table>
 
+<h3>Notifications</h3>
+<ul>
+    <li th:each="notif : ${notifications}">
+        <span th:text="${notif.message}"></span>
+        <form th:action="@{/notifications/acknowledge/{id}(id=${notif.id})}" method="post" style="display:inline">
+            <button type="submit">Acknowledge</button>
+        </form>
+    </li>
+</ul>
+
 <a href="/">Logout</a>
 </body>
 </html>

@@ -14,6 +14,7 @@ import s25601.pjwstk.personalfinanceassistant.repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
@@ -38,6 +39,12 @@ public class ProfileController {
 
     @Autowired
     private BudgetRepository budgetRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping("")
     public String showUserProfile(Model model) {
@@ -90,7 +97,21 @@ public class ProfileController {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             budget.setRemaining(budget.getLimitAmount().subtract(spent));
+
+            // Check if exceeded and notify
+            if (budget.getRemaining().compareTo(BigDecimal.ZERO) < 0) {
+                notificationService.notifyBudgetExceeded(
+                        user,
+                        budget.getCategory().name(),
+                        budget.getPeriod().name(),
+                        budget.getLimitAmount().toString(),
+                        spent.toString()
+                );
+            }
         }
+
+        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user);
+        model.addAttribute("notifications", notifications);
 
         model.addAttribute("budgets", budgets);
 
