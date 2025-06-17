@@ -13,6 +13,7 @@ import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -44,7 +45,8 @@ public class CashflowController {
     public String listCashflows(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
             @RequestParam(required = false) String account,
             Model model) {
 
@@ -53,26 +55,75 @@ public class CashflowController {
             return "redirect:/login";
         }
 
+        LocalDate fromDate = null;
+        LocalDate toDate = null;
+        String dateError = null;
+
+        try {
+            if (dateFrom != null && !dateFrom.isEmpty()) {
+                fromDate = LocalDate.parse(dateFrom);
+            }
+            if (dateTo != null && !dateTo.isEmpty()) {
+                toDate = LocalDate.parse(dateTo);
+            }
+            if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+                dateError = "Date From cannot be after Date To";
+            }
+        } catch (Exception e) {
+            dateError = "Invalid date format";
+        }
+
+        if (dateError != null) {
+            model.addAttribute("dateError", dateError);
+            model.addAttribute("cashflows", List.<Cashflow>of()); // empty list
+            model.addAttribute("filteredTotal", BigDecimal.ZERO);
+            model.addAttribute("incomeTotal", BigDecimal.ZERO);
+            model.addAttribute("expenseTotal", BigDecimal.ZERO);
+            model.addAttribute("netTotal", BigDecimal.ZERO);
+            model.addAttribute("incomeCategories", IncomeCategory.values());
+            model.addAttribute("expenseCategories", ExpenseCategory.values());
+            model.addAttribute("accounts", accountRepository.findByUserId(user.getId()));
+            // pass back the filters as is
+            model.addAttribute("selectedType", type);
+            model.addAttribute("selectedCategory", category);
+            model.addAttribute("selectedDateFrom", dateFrom);
+            model.addAttribute("selectedDateTo", dateTo);
+            model.addAttribute("selectedAccount", account);
+            return "cashflow_list";
+        }
+
+        final LocalDate fromDateFinal = fromDate;
+        final LocalDate toDateFinal = toDate;
+
         List<Cashflow> allCashflows = cashflowRepository.findByUserId(user.getId());
 
         List<Cashflow> filtered = allCashflows.stream().filter(cf -> {
             boolean match = true;
+
             if (type != null && !type.isEmpty()) {
                 match &= cf.getType().name().equalsIgnoreCase(type);
             }
+
             if (category != null && !category.isEmpty()) {
                 String cat = cf.getType() == CashflowType.INCOME ?
                         (cf.getIncomeCategory() != null ? cf.getIncomeCategory().name() : "") :
                         (cf.getExpenseCategory() != null ? cf.getExpenseCategory().name() : "");
                 match &= cat.equalsIgnoreCase(category);
             }
-            if (date != null && !date.isEmpty()) {
-                match &= cf.getDate().toString().equals(date);
+
+            if (fromDateFinal != null) {
+                match &= !cf.getDate().isBefore(fromDateFinal);  // cf.date >= dateFrom
             }
+
+            if (toDateFinal != null) {
+                match &= !cf.getDate().isAfter(toDateFinal);  // cf.date <= dateTo
+            }
+
             if (account != null && !account.isEmpty()) {
                 match &= cf.getAccount() != null &&
                         cf.getAccount().getName().equalsIgnoreCase(account);
             }
+
             return match;
         }).toList();
 
@@ -98,17 +149,17 @@ public class CashflowController {
         model.addAttribute("expenseTotal", expenseTotal);
         model.addAttribute("netTotal", netTotal);
 
-        // Add these for dropdown options
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
         List<Account> accounts = accountRepository.findByUserId(user.getId());
         model.addAttribute("accounts", accounts);
 
-        // Pass filter params back to view for form repopulation
+        // Pass back selected filters for form inputs
         model.addAttribute("selectedType", type);
         model.addAttribute("selectedCategory", category);
-        model.addAttribute("selectedDate", date);
+        model.addAttribute("selectedDateFrom", dateFrom);
+        model.addAttribute("selectedDateTo", dateTo);
         model.addAttribute("selectedAccount", account);
 
         return "cashflow_list";

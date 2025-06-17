@@ -7,6 +7,10 @@
 
 <h2>Your Cashflow</h2>
 
+<div th:if="${dateError}" style="color: red; margin-bottom: 10px;">
+    <p th:text="${dateError}"></p>
+</div>
+
 <form th:action="@{/cashflow}" method="get">
     <label>Type:
         <select name="type" th:onchange="this.form.submit()">
@@ -36,8 +40,12 @@
         </select>
     </label>
 
-    <label>Date:
-        <input type="date" name="date" th:value="${selectedDate}"/>
+    <label>Date From:
+        <input type="date" name="dateFrom" th:value="${selectedDateFrom}"/>
+    </label>
+
+    <label>Date To:
+        <input type="date" name="dateTo" th:value="${selectedDateTo}"/>
     </label>
 
     <label>Account:
