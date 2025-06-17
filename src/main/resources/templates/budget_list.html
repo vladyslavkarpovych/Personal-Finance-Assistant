@@ -1,42 +1,79 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Your Budgets</title>
+    <meta charset="UTF-8" />
+    <title>Your Budgets - Personal Finance Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-<h2>Your Budgets</h2>
-<p><a th:href="@{/budgets/add}">Add New Budget</a></p>
+<!-- Header -->
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-indigo-600">💰 Personal Finance Assistant</h1>
+        <nav>
+            <a th:href="@{/profile}" class="text-indigo-600 font-medium hover:underline">← Back to Profile</a>
+        </nav>
+    </div>
+</header>
 
-<table border="1">
-    <thead>
-    <tr>
-        <th>Category</th>
-        <th>Limit</th>
-        <th>Period</th>
-        <th>Remaining</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="b : ${budgets}">
-        <td th:text="${b.category}">Category</td>
-        <td th:text="${b.limitAmount}">Amount</td>
-        <td th:text="${b.period}">Period</td>
-        <td th:text="${b.remaining}">Remaining</td>
-        <td>
-            <form th:action="@{'/budgets/edit/' + ${b.id}}" method="get" style="display:inline">
-                <button type="submit">Edit</button>
-            </form>
-            |
-            <form th:action="@{/budgets/delete/{id}(id=${b.id})}" method="post" style="display:inline">
-                <button type="submit" onclick="return confirm('Delete this budget?')">Delete</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
+<!-- Main Content -->
+<main class="max-w-5xl mx-auto px-4 py-10 flex-grow">
 
-<a href="/profile">Back to Profile</a>
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-gray-900">Your Budgets</h2>
+        <a th:href="@{/budgets/add}"
+           class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition font-semibold">
+            + Add New Budget
+        </a>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+            <tr>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Category</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Limit</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Period</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Remaining</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            <tr th:each="b : ${budgets}" class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm" th:text="${b.category}">Category</td>
+                <td class="px-6 py-4 text-sm" th:text="${b.limitAmount}">Amount</td>
+                <td class="px-6 py-4 text-sm" th:text="${b.period}">Period</td>
+                <td class="px-6 py-4 text-sm" th:text="${b.remaining}">Remaining</td>
+                <td class="px-6 py-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <form th:action="@{'/budgets/edit/' + ${b.id}}" method="get" style="display:inline">
+                            <button type="submit"
+                                    class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm">
+                                ✏️ Edit
+                            </button>
+                        </form>
+                        <form th:action="@{/budgets/delete/{id}(id=${b.id})}" method="post" style="display:inline"
+                              onsubmit="return confirm('Delete this budget?');">
+                            <button type="submit"
+                                    class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm">
+                                🗑️ Delete
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="text-center text-sm text-gray-500 py-6 bg-gray-100">
+    &copy; 2025 Personal Finance Assistant. All rights reserved.
+</footer>
+
 </body>
 </html>
