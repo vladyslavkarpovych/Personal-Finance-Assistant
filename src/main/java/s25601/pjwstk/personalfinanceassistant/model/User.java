@@ -33,4 +33,8 @@ public class User {
     @NotBlank(message = "Email is required")
     @Column(unique = true, nullable = false)
     private String email;
+
+    public static int getMaxProfiles() { // Class Method
+        return MAX_PROFILES;
+    }
 }

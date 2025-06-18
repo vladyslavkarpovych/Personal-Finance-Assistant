@@ -108,6 +108,11 @@ public class ProfileController {
                         spent.toString()
                 );
             }
+
+            // Method Overload:
+//              if (budget.getRemaining().compareTo(BigDecimal.ZERO) < 0) {
+//                    notificationService.notifyBudgetExceeded(user, budget, spent);
+//              }
         }
 
         List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user); // Multi-valued Attribute
