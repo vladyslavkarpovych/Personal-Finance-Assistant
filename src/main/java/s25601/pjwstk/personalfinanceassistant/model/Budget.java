@@ -25,7 +25,7 @@ public class Budget {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private User user; // Complex Attribute
 
     @Transient
     private BigDecimal remaining;

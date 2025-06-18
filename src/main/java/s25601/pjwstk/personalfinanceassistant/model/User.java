@@ -15,6 +15,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class User {
 
+    public static final int MAX_PROFILES = 3; // Class Attribute
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

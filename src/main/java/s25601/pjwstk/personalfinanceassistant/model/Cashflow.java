@@ -1,5 +1,6 @@
 package s25601.pjwstk.personalfinanceassistant.model;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,8 @@ public class Cashflow {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String description;
+    @Nullable
+    private String description; // Optional Attribute
 
     @Enumerated(EnumType.STRING)
     private CashflowType type; // INCOME or EXPENSE

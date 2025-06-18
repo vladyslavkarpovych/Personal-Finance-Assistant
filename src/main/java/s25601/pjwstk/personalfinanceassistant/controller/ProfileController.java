@@ -26,7 +26,7 @@ import java.util.List;
 public class ProfileController {
 
     @Autowired
-    private ProfileRepository profileRepository;
+    private ProfileRepository profileRepository; // Extent - Persistency
 
     @Autowired
     private CashflowRepository cashflowRepository;
@@ -58,7 +58,7 @@ public class ProfileController {
 
         model.addAttribute("user", user);
 
-        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
+        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId()); // Extent
         model.addAttribute("cashflows", cashflows);
 
         List<Account> accounts = accountRepository.findByUserId(user.getId());
@@ -72,7 +72,7 @@ public class ProfileController {
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal netTotal = totalIncome.subtract(totalExpense);
+        BigDecimal netTotal = totalIncome.subtract(totalExpense); // Derived Attribute
 
         model.addAttribute("totalIncome", totalIncome);
         model.addAttribute("totalExpense", totalExpense);
@@ -110,7 +110,7 @@ public class ProfileController {
             }
         }
 
-        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user);
+        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user); // Multi-valued Attribute
         model.addAttribute("notifications", notifications);
 
         model.addAttribute("budgets", budgets);

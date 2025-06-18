@@ -44,15 +44,30 @@ public class AccountController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
+        User user = getCurrentUser();
+        List<Account> accounts = accountRepository.findByUserId(user.getId());
+
+        boolean maxAccountsReached = accounts.size() >= User.MAX_PROFILES;
+        model.addAttribute("maxAccountsReached", maxAccountsReached);
+        model.addAttribute("userAccountCount", accounts.size());
+
         model.addAttribute("account", new Account());
         return "account_form";
     }
 
     @PostMapping("/create")
     public String createAccount(@Valid @ModelAttribute("account") Account account,
-                                BindingResult result) {
+                                BindingResult result,
+                                Model model) {
         User user = getCurrentUser();
         if (user == null) return "redirect:/login";
+
+        // Check max accounts
+        List<Account> existingAccounts = accountRepository.findByUserId(user.getId());
+        if (existingAccounts.size() >= User.MAX_PROFILES) {
+            result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts.");
+            return "account_form";
+        }
 
         if (result.hasErrors()) {
             return "account_form";
