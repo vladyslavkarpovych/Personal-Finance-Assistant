@@ -1,6 +1,5 @@
 package s25601.pjwstk.personalfinanceassistant.controller;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,7 +12,6 @@ import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -30,14 +28,9 @@ public class AccountController {
     @Autowired
     private UserRepository userRepository;
 
-    private final UserService userService;
-
-    public AccountController(UserService userService) {
-        this.userService = userService;
-    }
-
     private User getCurrentUser() {
-        return userService.getCurrentUser();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return userRepository.findByUsername(auth.getName()).orElse(null);
     }
 
     private List<Account> getAccessibleAccounts(User user) {
@@ -258,7 +251,6 @@ public class AccountController {
         return "redirect:/accounts";
     }
 
-    @Transactional
     @PostMapping("/share/{id}/remove")
     public String removeSharedUser(@PathVariable("id") Long id,
                                    @RequestParam("userId") Long userId) {
@@ -270,16 +262,8 @@ public class AccountController {
         }
 
         Account account = optionalAccount.get();
-
-        User userToRemove = account.getSharedUsers().stream()
-                .filter(u -> u.getId().equals(userId))
-                .findFirst()
-                .orElse(null);
-
-        if (userToRemove != null) {
-            account.getSharedUsers().remove(userToRemove);
-            accountRepository.save(account);
-        }
+        account.getSharedUsers().removeIf(u -> u.getId().equals(userId));
+        accountRepository.save(account);
 
         return "redirect:/accounts/share/" + id;
     }
