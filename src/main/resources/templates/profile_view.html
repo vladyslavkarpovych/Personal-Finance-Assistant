@@ -40,6 +40,7 @@
                 <th class="px-4 py-2">Amount</th>
                 <th class="px-4 py-2">Date</th>
                 <th class="px-4 py-2">Account</th>
+                <th class="px-4 py-2">User</th>
                 <th class="px-4 py-2">Actions</th>
             </tr>
             </thead>
@@ -51,6 +52,7 @@
                 <td class="px-4 py-2" th:text="${cf.amount}">Amount</td>
                 <td class="px-4 py-2" th:text="${cf.date}">Date</td>
                 <td class="px-4 py-2" th:text="${cf.account.name}">Account</td>
+                <td class="px-4 py-2" th:text="${cf.user != null ? cf.user.username : '—'}">User</td>
                 <td class="px-4 py-2">
                     <div class="flex gap-2">
                         <form th:action="@{'/cashflow/edit/' + ${cf.id}}" method="get">

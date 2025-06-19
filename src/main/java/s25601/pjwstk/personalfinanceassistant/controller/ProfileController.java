@@ -56,14 +56,21 @@ public class ProfileController {
 
         model.addAttribute("user", user);
 
-        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
-        model.addAttribute("cashflows", cashflows);
-
+        // Get accounts owned and shared with user
         List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
         List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
         List<Account> accounts = Stream.concat(ownedAccounts.stream(), sharedAccounts.stream())
                 .distinct()
                 .toList();
+
+        // Extract account IDs
+        List<Long> accountIds = accounts.stream()
+                .map(Account::getId)
+                .toList();
+
+        // Fetch cashflows for all accounts (not just by userId)
+        List<Cashflow> cashflows = cashflowRepository.findByAccountIdIn(accountIds);
+        model.addAttribute("cashflows", cashflows);
 
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
@@ -88,7 +95,8 @@ public class ProfileController {
             LocalDate startDate = periodRange[0];
             LocalDate endDate = periodRange[1];
 
-            BigDecimal spent = cashflowRepository.findByUserId(user.getId()).stream()
+            // Calculate spent using cashflows filtered by budget category and date range
+            BigDecimal spent = cashflows.stream()
                     .filter(cf -> cf.getType() == CashflowType.EXPENSE)
                     .filter(cf -> cf.getExpenseCategory() == budget.getCategory())
                     .filter(cf -> {
