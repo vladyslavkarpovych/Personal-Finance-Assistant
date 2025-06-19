@@ -38,6 +38,9 @@ public class CashflowController {
         return owned.stream().distinct().collect(Collectors.toList());
     }
 
+    /**
+     * Recalculate balance for an account based on all its cashflows (income - expense)
+     */
     private void recalculateAccountBalance(Account account) {
         // Sum of all incomes for this account
         BigDecimal totalIncome = cashflowRepository.findByAccount(account).stream()
