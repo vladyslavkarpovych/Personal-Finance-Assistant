@@ -91,7 +91,6 @@
                 <th class="py-3 px-4 text-right">Amount</th>
                 <th class="py-3 px-4 text-left">Date</th>
                 <th class="py-3 px-4 text-left">Account</th>
-                <th class="py-3 px-4 text-left">User</th>
                 <th class="py-3 px-4 text-center">Actions</th>
             </tr>
             </thead>
@@ -103,7 +102,6 @@
                 <td class="py-2 px-4 text-right" th:text="${#numbers.formatDecimal(cashflow.amount, 1, 'COMMA', 2, 'POINT')}">Amount</td>
                 <td class="py-2 px-4" th:text="${cashflow.date}">Date</td>
                 <td class="py-2 px-4" th:text="${cashflow.account != null ? cashflow.account.name + ' (' + cashflow.account.currency + ')' : 'N/A'}">Account</td>
-                <td class="py-2 px-4" th:text="${cashflow.user != null ? cashflow.user.username : 'Unknown'}">User</td> <!-- User -->
                 <td class="py-2 px-4 text-center space-x-2">
                     <a th:href="@{/cashflow/edit/{id}(id=${cashflow.id})}"
                        class="text-indigo-600 hover:underline font-semibold">Edit</a>
