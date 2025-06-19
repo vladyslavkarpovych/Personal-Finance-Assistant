@@ -11,14 +11,12 @@ import s25601.pjwstk.personalfinanceassistant.model.Account;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/accounts")
@@ -30,6 +28,9 @@ public class AccountController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AccountService accountService;
+
     private final UserService userService;
 
     public AccountController(UserService userService) {
@@ -40,23 +41,12 @@ public class AccountController {
         return userService.getCurrentUser();
     }
 
-    private List<Account> getAccessibleAccounts(User user) {
-        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
-        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
-        return Stream.concat(ownedAccounts.stream(), sharedAccounts.stream()).distinct().toList();
-    }
-
-    private boolean canShareWithUser(User user) {
-        long totalAccounts = getAccessibleAccounts(user).size();
-        return totalAccounts < User.MAX_PROFILES;
-    }
-
     @GetMapping
     public String viewAccounts(Model model) {
         User currentUser = getCurrentUser();
         if (currentUser == null) return "redirect:/login";
 
-        List<Account> accounts = getAccessibleAccounts(currentUser);
+        List<Account> accounts = accountService.getAccessibleAccounts(currentUser);
 
         // Prepare filtered shared usernames excluding current user per account
         Map<Long, String> filteredSharedUsernames = new HashMap<>();
@@ -84,7 +74,7 @@ public class AccountController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         User user = getCurrentUser();
-        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
         long totalAccounts = accessibleAccounts.size();
 
         model.addAttribute("maxAccountsReached", totalAccounts >= User.MAX_PROFILES);
@@ -102,7 +92,7 @@ public class AccountController {
         User user = getCurrentUser();
         if (user == null) return "redirect:/login";
 
-        long totalAccounts = getAccessibleAccounts(user).size();
+        long totalAccounts = accountService.getAccessibleAccounts(user).size();
         if (totalAccounts >= User.MAX_PROFILES) {
             result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts (owned + shared).");
             return "account_form";
@@ -138,7 +128,7 @@ public class AccountController {
                     return "account_form";
                 }
 
-                if (!canShareWithUser(shareUser)) {
+                if (!accountService.canShareWithUser(shareUser)) {
                     model.addAttribute("account", account);
                     model.addAttribute("sharedUsernames", sharedUsernames);
                     model.addAttribute("error", "User '" + username + "' already has the maximum number of accounts.");
@@ -244,7 +234,7 @@ public class AccountController {
             return "account_share_form";
         }
 
-        if (!canShareWithUser(shareUser)) {
+        if (!accountService.canShareWithUser(shareUser)) {
             model.addAttribute("account", account);
             model.addAttribute("error", "User '" + username + "' already has the maximum number of accounts.");
             return "account_share_form";

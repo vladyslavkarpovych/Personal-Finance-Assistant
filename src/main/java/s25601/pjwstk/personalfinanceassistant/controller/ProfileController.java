@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
@@ -51,6 +49,9 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AccountService accountService;
+
     @GetMapping("")
     public String showUserProfile(Model model) {
         User user = userService.getCurrentUser();
@@ -61,12 +62,8 @@ public class ProfileController {
         model.addAttribute("user", user);
 
         // Get accounts owned and shared with user
-        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
-        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
-        List<Account> accounts = Stream.concat(ownedAccounts.stream(), sharedAccounts.stream())
-                .distinct()
-                .toList();
-
+        List<Account> accounts = accountService.getAccessibleAccounts(user);
+        
         // Extract account IDs
         List<Long> accountIds = accounts.stream()
                 .map(Account::getId)
