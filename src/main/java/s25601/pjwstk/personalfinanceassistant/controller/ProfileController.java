@@ -19,7 +19,6 @@ import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/profile")
@@ -63,7 +62,7 @@ public class ProfileController {
 
         // Get accounts owned and shared with user
         List<Account> accounts = accountService.getAccessibleAccounts(user);
-        
+
         // Extract account IDs
         List<Long> accountIds = accounts.stream()
                 .map(Account::getId)
