@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
@@ -33,12 +34,14 @@ public class BudgetController {
     @Autowired
     private NotificationService notificationService;
 
+    private final UserService userService;
+
+    public BudgetController(UserService userService) {
+        this.userService = userService;
+    }
+
     private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof org.springframework.security.core.userdetails.User userDetails) {
-            return userRepository.findByUsername(userDetails.getUsername()).orElse(null);
-        }
-        return null;
+        return userService.getCurrentUser();
     }
 
     @GetMapping
