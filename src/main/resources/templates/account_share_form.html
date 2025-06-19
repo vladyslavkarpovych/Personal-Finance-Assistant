@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Share Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-indigo-600">💰 Personal Finance Assistant</h1>
+        <nav>
+            <a th:href="@{/accounts}" class="text-indigo-600 font-medium hover:underline">← Back to Accounts</a>
+        </nav>
+    </div>
+</header>
+
+<main class="flex-grow max-w-3xl mx-auto px-6 py-12 bg-white rounded-lg shadow mt-10">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-8" th:text="'Share Account: ' + ${account.name}"></h2>
+
+    <div th:if="${error}" class="mb-4 p-3 bg-red-100 text-red-700 rounded border border-red-300" th:text="${error}"></div>
+
+    <form th:action="@{/accounts/share/{id}(id=${account.id})}" method="post" class="space-y-6">
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username to share with <span class="text-red-500">*</span></label>
+            <input type="text" id="username" name="username" required
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <button type="submit"
+                class="bg-indigo-600 text-white px-5 py-2 rounded shadow hover:bg-indigo-700 transition font-semibold">
+            Share Account
+        </button>
+    </form>
+
+    <section class="mt-12">
+
+
+        <ul th:if="${account.sharedUsers != null and account.sharedUsers.size() > 0}">
+            <h3 class="text-xl font-semibold mb-4">Currently Shared With:</h3>
+            <li th:each="user : ${account.sharedUsers}" class="flex justify-between items-center border p-2 rounded mb-2">
+                <span th:text="${user.username}">username</span>
+                <form th:action="@{/accounts/share/{id}/remove(id=${account.id})}" method="post" class="inline">
+                    <input type="hidden" name="userId" th:value="${user.id}" />
+                    <button type="submit" class="text-red-600 hover:underline text-sm font-medium">
+                        Remove
+                    </button>
+                </form>
+            </li>
+        </ul>
+
+        <p th:if="${account.sharedUsers == null or account.sharedUsers.size() == 0}" class="text-gray-600 italic">
+            This account is not shared with anyone.
+        </p>
+    </section>
+
+</main>
+
+<footer class="text-center text-sm text-gray-500 py-6 bg-gray-100 mt-12">
+    &copy; 2025 Personal Finance Assistant. All rights reserved.
+</footer>
+
+</body>
+</html>

@@ -6,7 +6,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -21,5 +23,13 @@ public class Account extends UserOwnedEntity {
     private BigDecimal balance;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cashflow> cashflows = new ArrayList<>(); // Composition Association
+    private List<Cashflow> cashflows = new ArrayList<>(); // Composition
+
+    @ManyToMany
+    @JoinTable(
+            name = "account_shared_users",
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> sharedUsers = new HashSet<>();
 }

@@ -20,13 +20,14 @@ import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
 
     @Autowired
-    private ProfileRepository profileRepository; // Extent - Persistency
+    private ProfileRepository profileRepository;
 
     @Autowired
     private CashflowRepository cashflowRepository;
@@ -48,20 +49,21 @@ public class ProfileController {
 
     @GetMapping("")
     public String showUserProfile(Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-
-        User user = userRepository.findByUsername(username).orElse(null);
+        User user = getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
 
         model.addAttribute("user", user);
 
-        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId()); // Extent
+        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
         model.addAttribute("cashflows", cashflows);
 
-        List<Account> accounts = accountRepository.findByUserId(user.getId());  // Multi-valued Attribute
+        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
+        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
+        List<Account> accounts = Stream.concat(ownedAccounts.stream(), sharedAccounts.stream())
+                .distinct()
+                .toList();
 
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
@@ -72,7 +74,7 @@ public class ProfileController {
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal netTotal = totalIncome.subtract(totalExpense); // Derived Attribute
+        BigDecimal netTotal = totalIncome.subtract(totalExpense);
 
         model.addAttribute("totalIncome", totalIncome);
         model.addAttribute("totalExpense", totalExpense);
@@ -98,7 +100,6 @@ public class ProfileController {
 
             budget.setRemaining(budget.getLimitAmount().subtract(spent));
 
-            // Check if exceeded and notify
             if (budget.getRemaining().compareTo(BigDecimal.ZERO) < 0) {
                 notificationService.notifyBudgetExceeded(
                         user,
@@ -108,21 +109,15 @@ public class ProfileController {
                         spent.toString()
                 );
             }
-
-            // Method Overload:
-//              if (budget.getRemaining().compareTo(BigDecimal.ZERO) < 0) {
-//                    notificationService.notifyBudgetExceeded(user, budget, spent);
-//              }
         }
 
-        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user); // Ordered Constraint
+        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user);
         model.addAttribute("notifications", notifications);
 
         model.addAttribute("budgets", budgets);
 
         return "profile_view";
     }
-
 
     @GetMapping("/create")
     public String showCreateProfileForm(Model model) {
@@ -151,7 +146,6 @@ public class ProfileController {
         return "profile_success";
     }
 
-    // Helper method to get the currently logged-in user entity
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {

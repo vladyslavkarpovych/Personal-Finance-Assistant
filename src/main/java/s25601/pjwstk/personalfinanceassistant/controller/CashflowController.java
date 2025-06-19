@@ -41,6 +41,14 @@ public class CashflowController {
         return null;
     }
 
+    // Helper method to get all accessible accounts: owned + shared
+    private List<Account> getAccessibleAccounts(User user) {
+        List<Account> owned = accountRepository.findByUserId(user.getId());
+        List<Account> shared = accountRepository.findBySharedUsersId(user.getId());
+        owned.addAll(shared);
+        return owned.stream().distinct().toList();
+    }
+
     @GetMapping
     public String listCashflows(
             @RequestParam(required = false) String type,
@@ -82,7 +90,10 @@ public class CashflowController {
             model.addAttribute("netTotal", BigDecimal.ZERO);
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
-            model.addAttribute("accounts", accountRepository.findByUserId(user.getId()));
+
+            // UPDATED: use accessible accounts (owned + shared)
+            model.addAttribute("accounts", getAccessibleAccounts(user));
+
             // pass back the filters as is
             model.addAttribute("selectedType", type);
             model.addAttribute("selectedCategory", category);
@@ -152,8 +163,8 @@ public class CashflowController {
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
-        List<Account> accounts = accountRepository.findByUserId(user.getId());
-        model.addAttribute("accounts", accounts);
+        // UPDATED: use accessible accounts (owned + shared)
+        model.addAttribute("accounts", getAccessibleAccounts(user));
 
         // Pass back selected filters for form inputs
         model.addAttribute("selectedType", type);
@@ -179,8 +190,8 @@ public class CashflowController {
 
         model.addAttribute("types", CashflowType.values());
 
-        List<Account> accounts = accountRepository.findByUserId(user.getId());
-        model.addAttribute("accounts", accounts);
+        // UPDATED: use accessible accounts (owned + shared)
+        model.addAttribute("accounts", getAccessibleAccounts(user));
 
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
@@ -199,7 +210,10 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-            model.addAttribute("accounts", accountRepository.findByUserId(user.getId()));
+
+            // UPDATED: use accessible accounts (owned + shared)
+            model.addAttribute("accounts", getAccessibleAccounts(user));
+
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
@@ -270,8 +284,8 @@ public class CashflowController {
         model.addAttribute("cashflow", cashflow);
         model.addAttribute("types", CashflowType.values());
 
-        List<Account> accounts = accountRepository.findByUserId(user.getId());
-        model.addAttribute("accounts", accounts);
+        // UPDATED: use accessible accounts (owned + shared)
+        model.addAttribute("accounts", getAccessibleAccounts(user));
 
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
@@ -291,7 +305,10 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-            model.addAttribute("accounts", accountRepository.findByUserId(user.getId()));
+
+            // UPDATED: use accessible accounts (owned + shared)
+            model.addAttribute("accounts", getAccessibleAccounts(user));
+
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
