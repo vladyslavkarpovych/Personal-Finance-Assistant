@@ -11,11 +11,7 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-public class Cashflow {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Cashflow extends UserOwnedEntity  {
 
     @Nullable
     private String description; // Optional Attribute
@@ -29,11 +25,7 @@ public class Cashflow {
 
     @ManyToOne
     @JoinColumn(name = "account_id")
-    private Account account;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    private Account account; // Complex Attribute
 
     @Enumerated(EnumType.STRING)
     private IncomeCategory incomeCategory; // XOR Constraint

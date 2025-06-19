@@ -9,11 +9,7 @@ import java.math.BigDecimal;
 @Entity
 @Getter
 @Setter
-public class Budget {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Budget extends UserOwnedEntity {
 
     @Enumerated(EnumType.STRING)
     private ExpenseCategory category;
@@ -22,10 +18,6 @@ public class Budget {
 
     @Enumerated(EnumType.STRING)
     private BudgetPeriod period = BudgetPeriod.MONTHLY;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user; // Complex Attribute
 
     @Transient
     private BigDecimal remaining;

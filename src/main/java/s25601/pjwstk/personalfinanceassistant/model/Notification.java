@@ -9,19 +9,11 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-public class Notification {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Notification extends UserOwnedEntity {
 
     private String message;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(); // Association with Attribute
 
-    private boolean read = false;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    private boolean read = false; // Association with Attribute
 }
