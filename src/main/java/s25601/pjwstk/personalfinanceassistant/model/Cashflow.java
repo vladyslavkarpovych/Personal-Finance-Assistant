@@ -35,11 +35,9 @@ public class Cashflow {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // Separate categories for income and expense
+    @Enumerated(EnumType.STRING)
+    private IncomeCategory incomeCategory; // XOR Constraint
 
     @Enumerated(EnumType.STRING)
-    private IncomeCategory incomeCategory;
-
-    @Enumerated(EnumType.STRING)
-    private ExpenseCategory expenseCategory;
+    private ExpenseCategory expenseCategory; // XOR Constraint
 }

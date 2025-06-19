@@ -19,7 +19,7 @@ public class Profile {
     @NotBlank(message = "Full name is required")
     private String fullName;
 
-    @Min(value = 0, message = "Monthly income must be positive")
+    @Min(value = 0, message = "Monthly income must be positive") // Custom Constraint
     private double monthlyIncome;
 
     @OneToOne

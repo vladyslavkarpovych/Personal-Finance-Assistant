@@ -19,7 +19,7 @@ public class NotificationService {
     }
 
     public void notifyBudgetExceeded(User user, String category, String period, String limit, String spent) {
-        List<Notification> existing = notificationRepository.findUnreadByUserAndCategoryAndPeriod(user, category, period);
+        List<Notification> existing = notificationRepository.findUnreadByUserAndCategoryAndPeriod(user, category, period); // Qualified Association
 
         if (existing.isEmpty()) {
             String message = String.format(
@@ -27,7 +27,7 @@ public class NotificationService {
                     category, period, limit, spent);
 
             Notification notification = new Notification();
-            notification.setUser(user);
+            notification.setUser(user); // Binary Association
             notification.setMessage(message);
 
             notificationRepository.save(notification);

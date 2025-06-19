@@ -61,7 +61,7 @@ public class ProfileController {
         List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId()); // Extent
         model.addAttribute("cashflows", cashflows);
 
-        List<Account> accounts = accountRepository.findByUserId(user.getId());
+        List<Account> accounts = accountRepository.findByUserId(user.getId());  // Multi-valued Attribute
 
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
@@ -115,7 +115,7 @@ public class ProfileController {
 //              }
         }
 
-        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user); // Multi-valued Attribute
+        List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user); // Ordered Constraint
         model.addAttribute("notifications", notifications);
 
         model.addAttribute("budgets", budgets);

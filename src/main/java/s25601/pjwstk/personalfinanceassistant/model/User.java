@@ -22,11 +22,11 @@ public class User {
     private Long id;
 
     @NotBlank(message = "Username is required")
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false) // Unique Constraint
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Column(nullable = false)
+    @Column(nullable = false) // Attribute Constraint
     private String password;
 
     @Email(message = "Email should be valid")
