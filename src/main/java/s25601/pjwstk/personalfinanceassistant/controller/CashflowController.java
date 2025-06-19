@@ -8,6 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
@@ -31,12 +32,8 @@ public class CashflowController {
     @Autowired
     private UserService userService;
 
-    private List<Account> getAccessibleAccounts(User user) {
-        List<Account> owned = accountRepository.findByUserId(user.getId());
-        List<Account> shared = accountRepository.findBySharedUsersId(user.getId());
-        owned.addAll(shared);
-        return owned.stream().distinct().collect(Collectors.toList());
-    }
+    @Autowired
+    private AccountService accountService;
 
     private void recalculateAccountBalance(Account account) {
         // Sum of all incomes for this account
@@ -87,7 +84,7 @@ public class CashflowController {
             dateError = "Invalid date format";
         }
 
-        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
         List<Long> accessibleAccountIds = accessibleAccounts.stream()
                 .map(Account::getId)
                 .collect(Collectors.toList());
@@ -179,7 +176,7 @@ public class CashflowController {
         model.addAttribute("cashflow", cashflow);
 
         model.addAttribute("types", CashflowType.values());
-        model.addAttribute("accounts", getAccessibleAccounts(user));
+        model.addAttribute("accounts", accountService.getAccessibleAccounts(user));
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
@@ -195,7 +192,7 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-            model.addAttribute("accounts", getAccessibleAccounts(user));
+            model.addAttribute("accounts", accountService.getAccessibleAccounts(user));
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
@@ -203,10 +200,10 @@ public class CashflowController {
 
         if (cashflow.getAccount() != null && cashflow.getAccount().getId() != null) {
             Account account = accountRepository.findById(cashflow.getAccount().getId()).orElse(null);
-            if (account == null || !getAccessibleAccounts(user).contains(account)) {
+            if (account == null || !accountService.getAccessibleAccounts(user).contains(account)) {
                 result.rejectValue("account", "error.cashflow", "Selected account not accessible.");
                 model.addAttribute("types", CashflowType.values());
-                model.addAttribute("accounts", getAccessibleAccounts(user));
+                model.addAttribute("accounts", accountService.getAccessibleAccounts(user));
                 model.addAttribute("incomeCategories", IncomeCategory.values());
                 model.addAttribute("expenseCategories", ExpenseCategory.values());
                 return "cashflow_form";
@@ -241,7 +238,7 @@ public class CashflowController {
         if (user == null) return "redirect:/login";
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
-        if (cashflow == null || !getAccessibleAccounts(user).contains(cashflow.getAccount())) {
+        if (cashflow == null || !accountService.getAccessibleAccounts(user).contains(cashflow.getAccount())) {
             return "redirect:/cashflow";
         }
 
@@ -263,13 +260,13 @@ public class CashflowController {
         if (user == null) return "redirect:/login";
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
-        if (cashflow == null || !getAccessibleAccounts(user).contains(cashflow.getAccount())) {
+        if (cashflow == null || !accountService.getAccessibleAccounts(user).contains(cashflow.getAccount())) {
             return "redirect:/cashflow";
         }
 
         model.addAttribute("cashflow", cashflow);
         model.addAttribute("types", CashflowType.values());
-        model.addAttribute("accounts", getAccessibleAccounts(user));
+        model.addAttribute("accounts", accountService.getAccessibleAccounts(user));
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
@@ -286,18 +283,18 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-            model.addAttribute("accounts", getAccessibleAccounts(user));
+            model.addAttribute("accounts", accountService.getAccessibleAccounts(user));
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
         }
 
         Cashflow existingCashflow = cashflowRepository.findById(id).orElse(null);
-        if (existingCashflow == null || !getAccessibleAccounts(user).contains(existingCashflow.getAccount())) {
+        if (existingCashflow == null || !accountService.getAccessibleAccounts(user).contains(existingCashflow.getAccount())) {
             return "redirect:/cashflow";
         }
 
-        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
 
         Account newAccount = null;
         if (updatedCashflow.getAccount() != null && updatedCashflow.getAccount().getId() != null) {
