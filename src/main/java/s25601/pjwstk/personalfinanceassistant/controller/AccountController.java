@@ -10,8 +10,6 @@ import s25601.pjwstk.personalfinanceassistant.model.Account;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
