@@ -11,6 +11,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,17 +30,8 @@ public class CashflowController {
     @Autowired
     private UserRepository userRepository;
 
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userRepository.findByUsername(userDetails.getUsername()).orElse(null);
-        }
-        return null;
-    }
+    @Autowired
+    private UserService userService;
 
     // Helper method to get all accessible accounts: owned + shared
     private List<Account> getAccessibleAccounts(User user) {
@@ -58,7 +50,7 @@ public class CashflowController {
             @RequestParam(required = false) String account,
             Model model) {
 
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -178,7 +170,7 @@ public class CashflowController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -203,7 +195,7 @@ public class CashflowController {
     public String addCashflow(@Valid @ModelAttribute("cashflow") Cashflow cashflow,
                               BindingResult result,
                               Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -246,7 +238,7 @@ public class CashflowController {
 
     @PostMapping("/delete/{id}")
     public String deleteCashflow(@PathVariable Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -271,7 +263,7 @@ public class CashflowController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -298,7 +290,7 @@ public class CashflowController {
                                  @Valid @ModelAttribute("cashflow") Cashflow updatedCashflow,
                                  BindingResult result,
                                  Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }

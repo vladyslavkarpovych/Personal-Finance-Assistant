@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
@@ -47,9 +48,12 @@ public class ProfileController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping("")
     public String showUserProfile(Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             return "redirect:/login";
         }
@@ -129,7 +133,7 @@ public class ProfileController {
     public String createProfile(@Valid @ModelAttribute("profile") Profile profile,
                                 BindingResult result,
                                 Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) {
             result.reject("user", "No logged-in user found.");
             return "profile_form";
@@ -144,18 +148,5 @@ public class ProfileController {
         profileRepository.save(profile);
         model.addAttribute("message", "Profile created successfully!");
         return "profile_success";
-    }
-
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-
-        Object principal = auth.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userRepository.findByUsername(userDetails.getUsername()).orElse(null);
-        }
-        return null;
     }
 }
