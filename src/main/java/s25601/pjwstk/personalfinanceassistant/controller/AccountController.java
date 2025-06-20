@@ -10,6 +10,7 @@ import s25601.pjwstk.personalfinanceassistant.model.Account;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
@@ -30,14 +31,11 @@ public class AccountController {
     @Autowired
     private UserService userService;
 
-    private List<Account> getAccessibleAccounts(User user) {
-        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
-        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
-        return Stream.concat(ownedAccounts.stream(), sharedAccounts.stream()).distinct().toList();
-    }
+    @Autowired
+    private AccountService accountService;
 
     private boolean canShareWithUser(User user) {
-        long totalAccounts = getAccessibleAccounts(user).size();
+        long totalAccounts = accountService.getAccessibleAccounts(user).size();
         return totalAccounts < User.MAX_PROFILES;
     }
 
@@ -46,7 +44,7 @@ public class AccountController {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) return "redirect:/login";
 
-        List<Account> accounts = getAccessibleAccounts(currentUser);
+        List<Account> accounts = accountService.getAccessibleAccounts(currentUser);
 
         // Prepare filtered shared usernames excluding current user per account
         Map<Long, String> filteredSharedUsernames = new HashMap<>();
@@ -74,7 +72,7 @@ public class AccountController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         User user = userService.getCurrentUser();
-        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
         long totalAccounts = accessibleAccounts.size();
 
         model.addAttribute("maxAccountsReached", totalAccounts >= User.MAX_PROFILES);
@@ -92,7 +90,7 @@ public class AccountController {
         User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
-        long totalAccounts = getAccessibleAccounts(user).size();
+        long totalAccounts = accountService.getAccessibleAccounts(user).size();
         if (totalAccounts >= User.MAX_PROFILES) {
             result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts (owned + shared).");
             return "account_form";

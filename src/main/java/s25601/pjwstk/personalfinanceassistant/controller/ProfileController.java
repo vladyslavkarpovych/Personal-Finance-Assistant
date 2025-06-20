@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
@@ -48,6 +49,9 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AccountService accountService;
+
     @GetMapping("")
     public String showUserProfile(Model model) {
         User user = userService.getCurrentUser();
@@ -60,11 +64,7 @@ public class ProfileController {
         List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
         model.addAttribute("cashflows", cashflows);
 
-        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
-        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
-        List<Account> accounts = Stream.concat(ownedAccounts.stream(), sharedAccounts.stream())
-                .distinct()
-                .toList();
+        List<Account> accounts = accountService.getAccessibleAccounts(user);
 
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
