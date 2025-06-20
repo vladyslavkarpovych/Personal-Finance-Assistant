@@ -12,6 +12,7 @@ import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -28,10 +29,8 @@ public class AccountController {
     @Autowired
     private UserRepository userRepository;
 
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByUsername(auth.getName()).orElse(null);
-    }
+    @Autowired
+    private UserService userService;
 
     private List<Account> getAccessibleAccounts(User user) {
         List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
@@ -46,7 +45,7 @@ public class AccountController {
 
     @GetMapping
     public String viewAccounts(Model model) {
-        User currentUser = getCurrentUser();
+        User currentUser = userService.getCurrentUser();
         if (currentUser == null) return "redirect:/login";
 
         List<Account> accounts = getAccessibleAccounts(currentUser);
@@ -76,7 +75,7 @@ public class AccountController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         List<Account> accessibleAccounts = getAccessibleAccounts(user);
         long totalAccounts = accessibleAccounts.size();
 
@@ -92,7 +91,7 @@ public class AccountController {
                                 BindingResult result,
                                 @RequestParam(name = "sharedUsernames", required = false) String sharedUsernames,
                                 Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
         long totalAccounts = getAccessibleAccounts(user).size();
@@ -148,7 +147,7 @@ public class AccountController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -163,7 +162,7 @@ public class AccountController {
     public String updateAccount(@PathVariable("id") Long id,
                                 @Valid @ModelAttribute("account") Account updatedAccount,
                                 BindingResult result) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
         Optional<Account> optionalAccount = accountRepository.findById(id);
@@ -186,7 +185,7 @@ public class AccountController {
 
     @PostMapping("/delete/{id}")
     public String deleteAccount(@PathVariable("id") Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isPresent() && optionalAccount.get().getUser().equals(user)) {
@@ -198,7 +197,7 @@ public class AccountController {
 
     @GetMapping("/share/{id}")
     public String showShareForm(@PathVariable("id") Long id, Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -213,7 +212,7 @@ public class AccountController {
     public String shareAccount(@PathVariable("id") Long id,
                                @RequestParam("username") String username,
                                Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -254,7 +253,7 @@ public class AccountController {
     @PostMapping("/share/{id}/remove")
     public String removeSharedUser(@PathVariable("id") Long id,
                                    @RequestParam("userId") Long userId) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
