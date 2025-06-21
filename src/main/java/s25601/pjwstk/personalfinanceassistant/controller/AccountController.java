@@ -16,7 +16,6 @@ import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/accounts")

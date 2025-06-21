@@ -4,6 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import s25601.pjwstk.personalfinanceassistant.exception.UserNotAuthenticatedException;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
 
@@ -28,5 +29,13 @@ public class UserService {
             }
         }
         return null;
+    }
+
+    public User getAuthenticatedUser() {
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new UserNotAuthenticatedException();
+        }
+        return user;
     }
 }

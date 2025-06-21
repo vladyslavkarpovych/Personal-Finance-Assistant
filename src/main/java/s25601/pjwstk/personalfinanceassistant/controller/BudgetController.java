@@ -39,8 +39,8 @@ public class BudgetController {
 
     @GetMapping
     public String listBudgets(Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) return "redirect:/login";
+
+        User user = userService.getAuthenticatedUser();
 
         List<Budget> budgets = budgetRepository.findByUser(user);
         LocalDate today = LocalDate.now();
@@ -87,8 +87,8 @@ public class BudgetController {
 
     @PostMapping("/add")
     public String addBudget(@Valid @ModelAttribute Budget budget, BindingResult result, Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) return "redirect:/login";
+
+        User user = userService.getAuthenticatedUser();
 
         if (result.hasErrors()) {
             model.addAttribute("categories", ExpenseCategory.values());
@@ -103,8 +103,8 @@ public class BudgetController {
 
     @PostMapping("/delete/{id}")
     public String deleteBudget(@PathVariable Long id) {
-        User user = userService.getCurrentUser();
-        if (user == null) return "redirect:/login";
+
+        User user = userService.getAuthenticatedUser();
 
         Budget budget = budgetRepository.findById(id).orElse(null);
         if (budget != null && budget.getUser().getId().equals(user.getId())) {
@@ -116,8 +116,8 @@ public class BudgetController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) return "redirect:/login";
+
+        User user = userService.getAuthenticatedUser();
 
         Budget budget = budgetRepository.findById(id).orElse(null);
         if (budget == null || !budget.getUser().getId().equals(user.getId())) {
@@ -132,8 +132,8 @@ public class BudgetController {
 
     @PostMapping("/edit/{id}")
     public String updateBudget(@PathVariable Long id, @Valid @ModelAttribute Budget budget, BindingResult result, Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) return "redirect:/login";
+
+        User user = userService.getAuthenticatedUser();
 
         if (result.hasErrors()) {
             model.addAttribute("categories", ExpenseCategory.values());

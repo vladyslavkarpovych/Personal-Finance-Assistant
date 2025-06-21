@@ -54,10 +54,8 @@ public class ProfileController {
 
     @GetMapping("")
     public String showUserProfile(Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         model.addAttribute("user", user);
 
