@@ -163,6 +163,8 @@ public class CashflowController {
         model.addAttribute("selectedDateTo", dateTo);
         model.addAttribute("selectedAccount", account);
 
+        model.addAttribute("currentUser", user);
+
         return "cashflow_list";
     }
 

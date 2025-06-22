@@ -113,7 +113,7 @@ public class ProfileController {
 
         List<Notification> notifications = notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user);
         model.addAttribute("notifications", notifications);
-
+        model.addAttribute("currentUser", user);
         model.addAttribute("budgets", budgets);
 
         return "profile_view";
