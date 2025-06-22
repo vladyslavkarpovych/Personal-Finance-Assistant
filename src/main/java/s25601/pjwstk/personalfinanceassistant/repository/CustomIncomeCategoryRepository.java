@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface CustomIncomeCategoryRepository extends JpaRepository<CustomIncomeCategory, Long> {
     List<CustomIncomeCategory> findByUserId(Long userId);
+    boolean existsByNameAndUserId(String name, Long userId);
 }

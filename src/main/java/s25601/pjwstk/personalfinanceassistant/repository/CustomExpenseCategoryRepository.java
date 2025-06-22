@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface CustomExpenseCategoryRepository extends JpaRepository<CustomExpenseCategory, Long> {
     List<CustomExpenseCategory> findByUserId(Long userId);
+    boolean existsByNameAndUserId(String name, Long userId);
 }
