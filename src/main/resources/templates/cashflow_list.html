@@ -99,20 +99,36 @@
             <tr th:each="cashflow : ${cashflows}" class="border-b last:border-none hover:bg-indigo-50">
                 <td class="py-2 px-4" th:text="${cashflow.description}">Description</td>
                 <td class="py-2 px-4" th:text="${cashflow.type}">Type</td>
-                <td class="py-2 px-4" th:text="${cashflow.type.name() == 'INCOME' ? cashflow.incomeCategory : cashflow.expenseCategory}">Category</td>
+                <td class="py-2 px-4"
+                    th:text="
+                        ${cashflow.type.name() == 'INCOME'
+                            ? (cashflow.customIncomeCategoryName != null && !#strings.isEmpty(cashflow.customIncomeCategoryName)
+                                ? cashflow.customIncomeCategoryName
+                                : cashflow.incomeCategory)
+                            : (cashflow.customExpenseCategoryName != null && !#strings.isEmpty(cashflow.customExpenseCategoryName)
+                                ? cashflow.customExpenseCategoryName
+                                : cashflow.expenseCategory)
+                        }">
+                    Category
+                </td>
                 <td class="py-2 px-4 text-right" th:text="${#numbers.formatDecimal(cashflow.amount, 1, 'COMMA', 2, 'POINT')}">Amount</td>
                 <td class="py-2 px-4" th:text="${cashflow.user != null ? cashflow.user.username : 'N/A'}">User</td>
                 <td class="py-2 px-4" th:text="${cashflow.date}">Date</td>
-                <td class="py-2 px-4" th:text="${cashflow.account != null ? cashflow.account.name + ' (' + cashflow.account.currency + ')' : 'N/A'}">Account</td>
+                <td class="py-2 px-4" th:text="${cashflow.account != null ? cashflow.account.name : 'N/A'}">Account</td>
                 <td class="py-2 px-4 text-center space-x-2">
-                    <a th:href="@{/cashflow/edit/{id}(id=${cashflow.id})}"
-                       class="text-indigo-600 hover:underline font-semibold">Edit</a>
-                    <form th:action="@{/cashflow/delete/{id}(id=${cashflow.id})}" method="post" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Are you sure?')"
-                                class="text-red-600 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0">
-                            Delete
-                        </button>
-                    </form>
+                    <div th:if="${cashflow.user.id} == ${currentUser.id}">
+                        <a th:href="@{/cashflow/edit/{id}(id=${cashflow.id})}"
+                           class="text-indigo-600 hover:underline font-semibold mr-2">Edit</a>
+                        <form th:action="@{/cashflow/delete/{id}(id=${cashflow.id})}" method="post" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Are you sure?')"
+                                    class="text-red-600 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                    <div th:unless="${cashflow.user.id} == ${currentUser.id}" class="text-gray-400 italic text-sm">
+                        No actions available
+                    </div>
                 </td>
             </tr>
             </tbody>
