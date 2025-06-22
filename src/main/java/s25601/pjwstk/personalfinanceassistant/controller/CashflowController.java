@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import s25601.pjwstk.personalfinanceassistant.exception.DuplicateCategoryException;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
@@ -14,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@Validated
 @Controller
 @RequestMapping("/cashflow")
 public class CashflowController {
@@ -188,96 +191,100 @@ public class CashflowController {
         model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
         model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
 
+        model.addAttribute("newCustomIncomeCategoryName", "");
+        model.addAttribute("newCustomExpenseCategoryName", "");
+
         return "cashflow_form";
     }
 
     @PostMapping("/add")
     public String addCashflow(@Valid @ModelAttribute("cashflow") Cashflow cashflow,
                               BindingResult result,
-                              @RequestParam(value="customIncomeCategoryNameNew", required=false) String customIncomeCategoryNameNew,
-                              @RequestParam(value="customExpenseCategoryNameNew", required=false) String customExpenseCategoryNameNew,
+                              @RequestParam(value = "customIncomeCategoryNameExisting", required = false) String customIncomeCategoryNameExisting,
+                              @RequestParam(value = "customExpenseCategoryNameExisting", required = false) String customExpenseCategoryNameExisting,
+                              @RequestParam(value = "customIncomeCategoryNameNew", required = false) String customIncomeCategoryNameNew,
+                              @RequestParam(value = "customExpenseCategoryNameNew", required = false) String customExpenseCategoryNameNew,
                               Model model) {
 
         User user = userService.getAuthenticatedUser();
 
-        // Override custom category fields if "new" text inputs are filled
+        // Validate new custom income category (check duplication)
         if (customIncomeCategoryNameNew != null && !customIncomeCategoryNameNew.isBlank()) {
-            cashflow.setCustomIncomeCategoryName(customIncomeCategoryNameNew.trim());
+            if (customIncomeCategoryRepository.existsByNameAndUserId(customIncomeCategoryNameNew.trim(), user.getId())) {
+                throw new DuplicateCategoryException("Custom income category '" + customIncomeCategoryNameNew.trim() + "' already exists.");
+            }
+            // Save and set the new custom category
+            CustomIncomeCategory newCat = new CustomIncomeCategory();
+            newCat.setName(customIncomeCategoryNameNew.trim());
+            newCat.setUser(user);
+            customIncomeCategoryRepository.save(newCat);
+
+            cashflow.setCustomIncomeCategoryName(newCat.getName());
+            cashflow.setIncomeCategory(null);
+        } else if (customIncomeCategoryNameExisting != null && !customIncomeCategoryNameExisting.isBlank()) {
+            // Use selected existing custom income category
+            cashflow.setCustomIncomeCategoryName(customIncomeCategoryNameExisting.trim());
+            cashflow.setIncomeCategory(null);
+        } else if (cashflow.getIncomeCategory() != null) {
+            // Use enum, clear custom
+            cashflow.setCustomIncomeCategoryName(null);
         }
+
+        // Same for EXPENSE category
         if (customExpenseCategoryNameNew != null && !customExpenseCategoryNameNew.isBlank()) {
-            cashflow.setCustomExpenseCategoryName(customExpenseCategoryNameNew.trim());
+            if (customExpenseCategoryRepository.existsByNameAndUserId(customExpenseCategoryNameNew.trim(), user.getId())) {
+                throw new DuplicateCategoryException("Custom expense category '" + customExpenseCategoryNameNew.trim() + "' already exists.");
+            }
+
+            CustomExpenseCategory newCat = new CustomExpenseCategory();
+            newCat.setName(customExpenseCategoryNameNew.trim());
+            newCat.setUser(user);
+            customExpenseCategoryRepository.save(newCat);
+
+            cashflow.setCustomExpenseCategoryName(newCat.getName());
+            cashflow.setExpenseCategory(null);
+        } else if (customExpenseCategoryNameExisting != null && !customExpenseCategoryNameExisting.isBlank()) {
+            cashflow.setCustomExpenseCategoryName(customExpenseCategoryNameExisting.trim());
+            cashflow.setExpenseCategory(null);
+        } else if (cashflow.getExpenseCategory() != null) {
+            cashflow.setCustomExpenseCategoryName(null);
+        }
+
+        // Ensure XOR
+        if (cashflow.getType() == CashflowType.INCOME) {
+            cashflow.setExpenseCategory(null);
+            cashflow.setCustomExpenseCategoryName(null);
+        } else if (cashflow.getType() == CashflowType.EXPENSE) {
+            cashflow.setIncomeCategory(null);
+            cashflow.setCustomIncomeCategoryName(null);
         }
 
         if (result.hasErrors()) {
-            // reload model attributes for dropdowns
+            result.getAllErrors().forEach(error -> System.out.println(error.getDefaultMessage()));
             model.addAttribute("types", CashflowType.values());
             model.addAttribute("accounts", getAccessibleAccounts(user));
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
             model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
+            model.addAttribute("newCustomIncomeCategoryName", cashflow.getNewCustomIncomeCategoryName());
+            model.addAttribute("newCustomExpenseCategoryName", cashflow.getNewCustomExpenseCategoryName());
             return "cashflow_form";
-        }
-
-        // Save new custom income category if provided
-        if (cashflow.getCustomIncomeCategoryName() != null && !cashflow.getCustomIncomeCategoryName().isBlank()) {
-            CustomIncomeCategory newCat = new CustomIncomeCategory();
-            newCat.setName(cashflow.getCustomIncomeCategoryName().trim());
-            newCat.setUser(user);
-            customIncomeCategoryRepository.save(newCat);
-            cashflow.setIncomeCategory(null);  // clear enum category if custom set
-        }
-
-        // Save new custom expense category if provided
-        if (cashflow.getCustomExpenseCategoryName() != null && !cashflow.getCustomExpenseCategoryName().isBlank()) {
-            CustomExpenseCategory newCat = new CustomExpenseCategory();
-            newCat.setName(cashflow.getCustomExpenseCategoryName().trim());
-            newCat.setUser(user);
-            customExpenseCategoryRepository.save(newCat);
-            cashflow.setExpenseCategory(null); // clear enum category if custom set
         }
 
         if (cashflow.getAccount() != null && cashflow.getAccount().getId() != null) {
             Account account = accountRepository.findById(cashflow.getAccount().getId()).orElse(null);
             cashflow.setAccount(account);
-        } else {
-            cashflow.setAccount(null);
         }
 
         cashflow.setUser(user);
-
-        if (cashflow.getType() == CashflowType.INCOME) {
-            if (cashflow.getCustomIncomeCategoryName() != null && !cashflow.getCustomIncomeCategoryName().isBlank()) {
-                // Custom category chosen, clear enum
-                cashflow.setIncomeCategory(null);
-            } else {
-                // No custom category, clear custom field
-                cashflow.setCustomIncomeCategoryName(null);
-            }
-            // Always clear expense category for income type
-            cashflow.setExpenseCategory(null);
-        } else if (cashflow.getType() == CashflowType.EXPENSE) {
-            if (cashflow.getCustomExpenseCategoryName() != null && !cashflow.getCustomExpenseCategoryName().isBlank()) {
-                // Custom expense category, clear enum
-                cashflow.setExpenseCategory(null);
-            } else {
-                // No custom category, clear custom field
-                cashflow.setCustomExpenseCategoryName(null);
-            }
-            // Always clear income category for expense type
-            cashflow.setIncomeCategory(null);
-        }
-
-        if (cashflow.getAccount() != null) {
+        if (cashflow.getType() == CashflowType.INCOME && cashflow.getAccount() != null) {
             Account account = cashflow.getAccount();
-
-            if (cashflow.getType() == CashflowType.INCOME) {
-                account.setBalance(account.getBalance().add(cashflow.getAmount()));
-            }
+            account.setBalance(account.getBalance().add(cashflow.getAmount()));
             accountRepository.save(account);
         }
-        cashflowRepository.save(cashflow);
 
+        cashflowRepository.save(cashflow);
         return "redirect:/profile";
     }
 
@@ -332,6 +339,22 @@ public class CashflowController {
                                  Model model) {
 
         User user = userService.getAuthenticatedUser();
+
+        // Check duplicate custom income category name if present in update
+        if (updatedCashflow.getCustomIncomeCategoryName() != null && !updatedCashflow.getCustomIncomeCategoryName().isBlank()) {
+            boolean exists = customIncomeCategoryRepository.existsByNameAndUserId(updatedCashflow.getCustomIncomeCategoryName().trim(), user.getId());
+            if (exists) {
+                throw new DuplicateCategoryException("Custom income category '" + updatedCashflow.getCustomIncomeCategoryName().trim() + "' already exists.");
+            }
+        }
+
+        // Check duplicate custom expense category name if present in update
+        if (updatedCashflow.getCustomExpenseCategoryName() != null && !updatedCashflow.getCustomExpenseCategoryName().isBlank()) {
+            boolean exists = customExpenseCategoryRepository.existsByNameAndUserId(updatedCashflow.getCustomExpenseCategoryName().trim(), user.getId());
+            if (exists) {
+                throw new DuplicateCategoryException("Custom expense category '" + updatedCashflow.getCustomExpenseCategoryName().trim() + "' already exists.");
+            }
+        }
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());

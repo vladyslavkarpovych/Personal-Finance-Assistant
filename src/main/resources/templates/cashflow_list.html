@@ -101,16 +101,29 @@
                 <td class="py-2 px-4" th:text="${cashflow.type}">Type</td>
                 <td class="py-2 px-4"
                     th:text="
-                        ${cashflow.type.name() == 'INCOME'
-                            ? (cashflow.customIncomeCategoryName != null && !#strings.isEmpty(cashflow.customIncomeCategoryName)
-                                ? cashflow.customIncomeCategoryName
-                                : cashflow.incomeCategory)
-                            : (cashflow.customExpenseCategoryName != null && !#strings.isEmpty(cashflow.customExpenseCategoryName)
-                                ? cashflow.customExpenseCategoryName
-                                : cashflow.expenseCategory)
-                        }">
+        ${cashflow.type.name() == 'INCOME'
+            ? (
+                (cashflow.newCustomIncomeCategoryName != null and !#strings.isEmpty(cashflow.newCustomIncomeCategoryName))
+                    ? cashflow.newCustomIncomeCategoryName
+                    : (
+                        (cashflow.customIncomeCategoryName != null and !#strings.isEmpty(cashflow.customIncomeCategoryName))
+                            ? cashflow.customIncomeCategoryName
+                            : (cashflow.incomeCategory != null ? cashflow.incomeCategory.name() : '')
+                      )
+              )
+            : (
+                (cashflow.newCustomExpenseCategoryName != null and !#strings.isEmpty(cashflow.newCustomExpenseCategoryName))
+                    ? cashflow.newCustomExpenseCategoryName
+                    : (
+                        (cashflow.customExpenseCategoryName != null and !#strings.isEmpty(cashflow.customExpenseCategoryName))
+                            ? cashflow.customExpenseCategoryName
+                            : (cashflow.expenseCategory != null ? cashflow.expenseCategory.name() : '')
+                      )
+              )
+        }">
                     Category
                 </td>
+
                 <td class="py-2 px-4 text-right" th:text="${#numbers.formatDecimal(cashflow.amount, 1, 'COMMA', 2, 'POINT')}">Amount</td>
                 <td class="py-2 px-4" th:text="${cashflow.user != null ? cashflow.user.username : 'N/A'}">User</td>
                 <td class="py-2 px-4" th:text="${cashflow.date}">Date</td>
