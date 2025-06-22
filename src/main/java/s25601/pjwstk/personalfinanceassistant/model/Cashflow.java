@@ -2,6 +2,8 @@ package s25601.pjwstk.personalfinanceassistant.model;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,8 +21,11 @@ public class Cashflow extends UserOwnedEntity  {
     @Enumerated(EnumType.STRING)
     private CashflowType type; // INCOME or EXPENSE
 
+    @NotNull
+    @DecimalMin(value = "0.00", inclusive = false)
     private BigDecimal amount;
 
+    @NotNull
     private LocalDate date;
 
     @ManyToOne

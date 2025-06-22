@@ -89,7 +89,8 @@ public class CashflowController {
         final LocalDate fromDateFinal = fromDate;
         final LocalDate toDateFinal = toDate;
 
-        List<Cashflow> allCashflows = cashflowRepository.findByUserId(user.getId());
+        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        List<Cashflow> allCashflows = cashflowRepository.findByAccountIn(accessibleAccounts);
 
         List<Cashflow> filtered = allCashflows.stream().filter(cf -> {
             boolean match = true;
