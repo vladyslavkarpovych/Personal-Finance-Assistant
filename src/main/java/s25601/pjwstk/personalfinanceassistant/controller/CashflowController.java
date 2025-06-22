@@ -258,6 +258,14 @@ public class CashflowController {
             cashflow.setIncomeCategory(null);
         }
 
+        if (cashflow.getAccount() != null) {
+            Account account = cashflow.getAccount();
+
+            if (cashflow.getType() == CashflowType.INCOME) {
+                account.setBalance(account.getBalance().add(cashflow.getAmount()));
+            }
+            accountRepository.save(account);
+        }
         cashflowRepository.save(cashflow);
 
         return "redirect:/profile";
