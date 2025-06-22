@@ -60,23 +60,39 @@
         </div>
 
         <div id="incomeCategoryDiv" class="hidden">
-            <label for="incomeCategory" class="block font-medium mb-1">Income Category:</label>
+            <label class="block font-medium mb-1">Income Category:</label>
             <select id="incomeCategory" th:field="*{incomeCategory}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option th:each="cat : ${incomeCategories}" th:value="${cat}" th:text="${cat}">IncomeCategory</option>
+                    class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">-- Select Predefined --</option>
+                <option th:each="cat : ${incomeCategories}" th:value="${cat}" th:text="${cat}"></option>
+                <option th:each="cat : ${customIncomeCategories}"
+                        th:value="${cat.name}"
+                        th:text="${cat.name} + ' (Custom)'" >
+                </option>
             </select>
-            <div th:if="${#fields.hasErrors('incomeCategory')}" th:errors="*{incomeCategory}"
-                 class="text-red-600 mt-1 text-sm"></div>
+
+            <label for="customIncomeCategoryName" class="block font-medium mb-1">Or enter new custom income category:</label>
+            <input id="customIncomeCategoryName" type="text" th:field="*{customIncomeCategoryName}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div th:if="${#fields.hasErrors('customIncomeCategoryName')}" th:errors="*{customIncomeCategoryName}" class="text-red-600 mt-1 text-sm"></div>
         </div>
 
         <div id="expenseCategoryDiv" class="hidden">
-            <label for="expenseCategory" class="block font-medium mb-1">Expense Category:</label>
+            <label class="block font-medium mb-1">Expense Category:</label>
             <select id="expenseCategory" th:field="*{expenseCategory}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option th:each="cat : ${expenseCategories}" th:value="${cat}" th:text="${cat}">ExpenseCategory</option>
+                    class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">-- Select Predefined --</option>
+                <option th:each="cat : ${expenseCategories}" th:value="${cat}" th:text="${cat}"></option>
+                <option th:each="cat : ${customExpenseCategories}"
+                        th:value="${cat.name}"
+                        th:text="${cat.name} + ' (Custom)'" >
+                </option>
             </select>
-            <div th:if="${#fields.hasErrors('expenseCategory')}" th:errors="*{expenseCategory}"
-                 class="text-red-600 mt-1 text-sm"></div>
+
+            <label for="customExpenseCategoryName" class="block font-medium mb-1">Or enter new custom expense category:</label>
+            <input id="customExpenseCategoryName" type="text" th:field="*{customExpenseCategoryName}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div th:if="${#fields.hasErrors('customExpenseCategoryName')}" th:errors="*{customExpenseCategoryName}" class="text-red-600 mt-1 text-sm"></div>
         </div>
 
         <div>

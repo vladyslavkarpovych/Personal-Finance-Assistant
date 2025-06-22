@@ -30,6 +30,12 @@ public class CashflowController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CustomIncomeCategoryRepository customIncomeCategoryRepository;
+
+    @Autowired
+    private CustomExpenseCategoryRepository customExpenseCategoryRepository;
+
     private List<Account> getAccessibleAccounts(User user) {
         List<Account> owned = accountRepository.findByUserId(user.getId());
         List<Account> shared = accountRepository.findBySharedUsersId(user.getId());
@@ -171,11 +177,14 @@ public class CashflowController {
         model.addAttribute("cashflow", cashflow);
 
         model.addAttribute("types", CashflowType.values());
-
         model.addAttribute("accounts", getAccessibleAccounts(user));
 
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
+
+        // Add user's custom categories
+        model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
+        model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
 
         return "cashflow_form";
     }
@@ -188,13 +197,32 @@ public class CashflowController {
         User user = userService.getAuthenticatedUser();
 
         if (result.hasErrors()) {
+            // add model attributes again (same as GET)
             model.addAttribute("types", CashflowType.values());
-
             model.addAttribute("accounts", getAccessibleAccounts(user));
-
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
+            model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
+            model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
             return "cashflow_form";
+        }
+
+        // Save new custom income category if provided
+        if (cashflow.getCustomIncomeCategoryName() != null && !cashflow.getCustomIncomeCategoryName().isBlank()) {
+            CustomIncomeCategory newCat = new CustomIncomeCategory();
+            newCat.setName(cashflow.getCustomIncomeCategoryName().trim());
+            newCat.setUser(user);
+            customIncomeCategoryRepository.save(newCat);
+            cashflow.setIncomeCategory(null);  // clear enum category if custom set
+        }
+
+        // Save new custom expense category if provided
+        if (cashflow.getCustomExpenseCategoryName() != null && !cashflow.getCustomExpenseCategoryName().isBlank()) {
+            CustomExpenseCategory newCat = new CustomExpenseCategory();
+            newCat.setName(cashflow.getCustomExpenseCategoryName().trim());
+            newCat.setUser(user);
+            customExpenseCategoryRepository.save(newCat);
+            cashflow.setExpenseCategory(null); // clear enum category if custom set
         }
 
         if (cashflow.getAccount() != null && cashflow.getAccount().getId() != null) {
@@ -206,15 +234,26 @@ public class CashflowController {
 
         cashflow.setUser(user);
 
-        if (cashflow.getAccount() != null && cashflow.getAmount() != null) {
-            Account account = cashflow.getAccount();
-            if (cashflow.getType() == CashflowType.INCOME) {
-                account.setBalance(account.getBalance().add(cashflow.getAmount()));
-                cashflow.setExpenseCategory(null);
-                accountRepository.save(account);
-            } else if (cashflow.getType() == CashflowType.EXPENSE) {
+        if (cashflow.getType() == CashflowType.INCOME) {
+            if (cashflow.getCustomIncomeCategoryName() != null && !cashflow.getCustomIncomeCategoryName().isBlank()) {
+                // Custom category chosen, clear enum
                 cashflow.setIncomeCategory(null);
+            } else {
+                // No custom category, clear custom field
+                cashflow.setCustomIncomeCategoryName(null);
             }
+            // Always clear expense category for income type
+            cashflow.setExpenseCategory(null);
+        } else if (cashflow.getType() == CashflowType.EXPENSE) {
+            if (cashflow.getCustomExpenseCategoryName() != null && !cashflow.getCustomExpenseCategoryName().isBlank()) {
+                // Custom expense category, clear enum
+                cashflow.setExpenseCategory(null);
+            } else {
+                // No custom category, clear custom field
+                cashflow.setCustomExpenseCategoryName(null);
+            }
+            // Always clear income category for expense type
+            cashflow.setIncomeCategory(null);
         }
 
         cashflowRepository.save(cashflow);
@@ -247,7 +286,6 @@ public class CashflowController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-
         User user = userService.getAuthenticatedUser();
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
@@ -257,12 +295,12 @@ public class CashflowController {
 
         model.addAttribute("cashflow", cashflow);
         model.addAttribute("types", CashflowType.values());
-
-        // UPDATED: use accessible accounts (owned + shared)
         model.addAttribute("accounts", getAccessibleAccounts(user));
-
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
+
+        model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
+        model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
 
         return "cashflow_form";
     }
@@ -277,12 +315,11 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-
-            // UPDATED: use accessible accounts (owned + shared)
             model.addAttribute("accounts", getAccessibleAccounts(user));
-
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
+            model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
+            model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
             return "cashflow_form";
         }
 
@@ -291,17 +328,20 @@ public class CashflowController {
             return "redirect:/profile";
         }
 
+        // Adjust old account balance if needed (remove old amount)
         Account oldAccount = existingCashflow.getAccount();
         if (oldAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
             oldAccount.setBalance(oldAccount.getBalance().subtract(existingCashflow.getAmount()));
             accountRepository.save(oldAccount);
         }
 
+        // Update fields
         existingCashflow.setDescription(updatedCashflow.getDescription());
         existingCashflow.setType(updatedCashflow.getType());
         existingCashflow.setAmount(updatedCashflow.getAmount());
         existingCashflow.setDate(updatedCashflow.getDate());
 
+        // Update account
         if (updatedCashflow.getAccount() != null && updatedCashflow.getAccount().getId() != null) {
             Account newAccount = accountRepository.findById(updatedCashflow.getAccount().getId()).orElse(null);
             existingCashflow.setAccount(newAccount);
@@ -309,11 +349,57 @@ public class CashflowController {
             existingCashflow.setAccount(null);
         }
 
-        existingCashflow.setIncomeCategory(updatedCashflow.getIncomeCategory());
-        existingCashflow.setExpenseCategory(updatedCashflow.getExpenseCategory());
+        User currentUser = userService.getAuthenticatedUser();
+
+        // Handle new custom income category
+        if (updatedCashflow.getCustomIncomeCategoryName() != null && !updatedCashflow.getCustomIncomeCategoryName().isBlank()) {
+            CustomIncomeCategory newCat = new CustomIncomeCategory();
+            newCat.setName(updatedCashflow.getCustomIncomeCategoryName().trim());
+            newCat.setUser(currentUser);
+            customIncomeCategoryRepository.save(newCat);
+
+            existingCashflow.setCustomIncomeCategoryName(newCat.getName());
+            existingCashflow.setIncomeCategory(null); // clear enum
+            // Clear expense categories since this is income
+            existingCashflow.setExpenseCategory(null);
+            existingCashflow.setCustomExpenseCategoryName(null);
+        } else {
+            // No new custom income category provided
+            existingCashflow.setCustomIncomeCategoryName(null);
+            // If type is income, keep enum, else clear it
+            if (existingCashflow.getType() == CashflowType.INCOME) {
+                existingCashflow.setIncomeCategory(updatedCashflow.getIncomeCategory());
+                existingCashflow.setExpenseCategory(null);
+                existingCashflow.setCustomExpenseCategoryName(null);
+            }
+        }
+
+        // Handle new custom expense category
+        if (updatedCashflow.getCustomExpenseCategoryName() != null && !updatedCashflow.getCustomExpenseCategoryName().isBlank()) {
+            CustomExpenseCategory newCat = new CustomExpenseCategory();
+            newCat.setName(updatedCashflow.getCustomExpenseCategoryName().trim());
+            newCat.setUser(currentUser);
+            customExpenseCategoryRepository.save(newCat);
+
+            existingCashflow.setCustomExpenseCategoryName(newCat.getName());
+            existingCashflow.setExpenseCategory(null); // clear enum
+            // Clear income categories since this is expense
+            existingCashflow.setIncomeCategory(null);
+            existingCashflow.setCustomIncomeCategoryName(null);
+        } else {
+            // No new custom expense category provided
+            existingCashflow.setCustomExpenseCategoryName(null);
+            // If type is expense, keep enum, else clear it
+            if (existingCashflow.getType() == CashflowType.EXPENSE) {
+                existingCashflow.setExpenseCategory(updatedCashflow.getExpenseCategory());
+                existingCashflow.setIncomeCategory(null);
+                existingCashflow.setCustomIncomeCategoryName(null);
+            }
+        }
 
         cashflowRepository.save(existingCashflow);
 
+        // Adjust new account balance (add new amount)
         Account newAccount = existingCashflow.getAccount();
         if (newAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
             newAccount.setBalance(newAccount.getBalance().add(existingCashflow.getAmount()));
