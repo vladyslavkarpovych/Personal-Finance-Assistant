@@ -38,6 +38,7 @@
                 <th class="px-4 py-2">Type</th>
                 <th class="px-4 py-2">Category</th>
                 <th class="px-4 py-2">Amount</th>
+                <th class="px-4 py-2">User</th>
                 <th class="px-4 py-2">Date</th>
                 <th class="px-4 py-2">Account</th>
                 <th class="px-4 py-2">Actions</th>
@@ -49,6 +50,7 @@
                 <td class="px-4 py-2" th:text="${cf.type}">Type</td>
                 <td class="px-4 py-2" th:text="${cf.type.name() == 'INCOME' ? cf.incomeCategory : cf.expenseCategory}">Category</td>
                 <td class="px-4 py-2" th:text="${cf.amount}">Amount</td>
+                <td class="px-4 py-2" th:text="${cf.user.username}">Username</td>
                 <td class="px-4 py-2" th:text="${cf.date}">Date</td>
                 <td class="px-4 py-2" th:text="${cf.account.name}">Account</td>
                 <td class="px-4 py-2">
