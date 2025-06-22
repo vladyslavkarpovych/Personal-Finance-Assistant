@@ -59,10 +59,11 @@ public class ProfileController {
 
         model.addAttribute("user", user);
 
-        List<Cashflow> cashflows = cashflowRepository.findByUserId(user.getId());
-        model.addAttribute("cashflows", cashflows);
-
         List<Account> accounts = accountService.getAccessibleAccounts(user);
+        model.addAttribute("accounts", accounts);
+
+        List<Cashflow> cashflows = cashflowRepository.findByAccountIn(accounts);
+        model.addAttribute("cashflows", cashflows);
 
         BigDecimal totalIncome = accounts.stream()
                 .map(Account::getBalance)
