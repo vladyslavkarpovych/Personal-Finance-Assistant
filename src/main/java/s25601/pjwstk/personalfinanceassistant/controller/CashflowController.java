@@ -146,10 +146,8 @@ public class CashflowController {
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
-        // UPDATED: use accessible accounts (owned + shared)
         model.addAttribute("accounts", getAccessibleAccounts(user));
 
-        // Pass back selected filters for form inputs
         model.addAttribute("selectedType", type);
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedDateFrom", dateFrom);
@@ -188,9 +186,7 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-
             model.addAttribute("accounts", getAccessibleAccounts(user));
-
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
@@ -207,13 +203,16 @@ public class CashflowController {
 
         if (cashflow.getAccount() != null && cashflow.getAmount() != null) {
             Account account = cashflow.getAccount();
+
             if (cashflow.getType() == CashflowType.INCOME) {
                 account.setBalance(account.getBalance().add(cashflow.getAmount()));
                 cashflow.setExpenseCategory(null);
-                accountRepository.save(account);
             } else if (cashflow.getType() == CashflowType.EXPENSE) {
+                account.setBalance(account.getBalance().subtract(cashflow.getAmount()));
                 cashflow.setIncomeCategory(null);
             }
+
+            accountRepository.save(account);
         }
 
         cashflowRepository.save(cashflow);
@@ -235,8 +234,10 @@ public class CashflowController {
         if (account != null && cashflow.getAmount() != null) {
             if (cashflow.getType() == CashflowType.INCOME) {
                 account.setBalance(account.getBalance().subtract(cashflow.getAmount()));
-                accountRepository.save(account);
+            } else if (cashflow.getType() == CashflowType.EXPENSE) {
+                account.setBalance(account.getBalance().add(cashflow.getAmount()));
             }
+            accountRepository.save(account);
         }
 
         cashflowRepository.delete(cashflow);
@@ -256,10 +257,7 @@ public class CashflowController {
 
         model.addAttribute("cashflow", cashflow);
         model.addAttribute("types", CashflowType.values());
-
-        // UPDATED: use accessible accounts (owned + shared)
         model.addAttribute("accounts", getAccessibleAccounts(user));
-
         model.addAttribute("incomeCategories", IncomeCategory.values());
         model.addAttribute("expenseCategories", ExpenseCategory.values());
 
@@ -276,10 +274,7 @@ public class CashflowController {
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
-
-            // UPDATED: use accessible accounts (owned + shared)
             model.addAttribute("accounts", getAccessibleAccounts(user));
-
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
             return "cashflow_form";
@@ -291,8 +286,16 @@ public class CashflowController {
         }
 
         Account oldAccount = existingCashflow.getAccount();
-        if (oldAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
-            oldAccount.setBalance(oldAccount.getBalance().subtract(existingCashflow.getAmount()));
+        BigDecimal oldAmount = existingCashflow.getAmount();
+        CashflowType oldType = existingCashflow.getType();
+
+        // Reverse the effect of old cashflow on old account balance
+        if (oldAccount != null && oldAmount != null) {
+            if (oldType == CashflowType.INCOME) {
+                oldAccount.setBalance(oldAccount.getBalance().subtract(oldAmount));
+            } else if (oldType == CashflowType.EXPENSE) {
+                oldAccount.setBalance(oldAccount.getBalance().add(oldAmount));
+            }
             accountRepository.save(oldAccount);
         }
 
@@ -313,9 +316,17 @@ public class CashflowController {
 
         cashflowRepository.save(existingCashflow);
 
+        // Apply the updated cashflow effect on the new account balance
         Account newAccount = existingCashflow.getAccount();
-        if (newAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
-            newAccount.setBalance(newAccount.getBalance().add(existingCashflow.getAmount()));
+        BigDecimal newAmount = existingCashflow.getAmount();
+        CashflowType newType = existingCashflow.getType();
+
+        if (newAccount != null && newAmount != null) {
+            if (newType == CashflowType.INCOME) {
+                newAccount.setBalance(newAccount.getBalance().add(newAmount));
+            } else if (newType == CashflowType.EXPENSE) {
+                newAccount.setBalance(newAccount.getBalance().subtract(newAmount));
+            }
             accountRepository.save(newAccount);
         }
 

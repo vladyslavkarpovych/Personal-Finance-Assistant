@@ -59,6 +59,7 @@
                  class="text-red-600 mt-1 text-sm"></div>
         </div>
 
+        <!-- Income Category -->
         <div id="incomeCategoryDiv" class="hidden">
             <label for="incomeCategory" class="block font-medium mb-1">Income Category:</label>
             <select id="incomeCategory" th:field="*{incomeCategory}"
@@ -67,8 +68,15 @@
             </select>
             <div th:if="${#fields.hasErrors('incomeCategory')}" th:errors="*{incomeCategory}"
                  class="text-red-600 mt-1 text-sm"></div>
+
+            <!-- Custom Income Category Text Input -->
+            <label for="customIncomeCategory" class="block font-medium mt-2 mb-1 text-sm text-gray-600">Or enter custom income category:</label>
+            <input id="customIncomeCategory" name="customIncomeCategory" type="text"
+                   th:value="${customIncomeCategory}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
+        <!-- Expense Category -->
         <div id="expenseCategoryDiv" class="hidden">
             <label for="expenseCategory" class="block font-medium mb-1">Expense Category:</label>
             <select id="expenseCategory" th:field="*{expenseCategory}"
@@ -77,6 +85,12 @@
             </select>
             <div th:if="${#fields.hasErrors('expenseCategory')}" th:errors="*{expenseCategory}"
                  class="text-red-600 mt-1 text-sm"></div>
+
+            <!-- Custom Expense Category Text Input -->
+            <label for="customExpenseCategory" class="block font-medium mt-2 mb-1 text-sm text-gray-600">Or enter custom expense category:</label>
+            <input id="customExpenseCategory" name="customExpenseCategory" type="text"
+                   th:value="${customExpenseCategory}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
         <div>

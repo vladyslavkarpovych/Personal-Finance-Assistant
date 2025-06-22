@@ -32,4 +32,8 @@ public class Cashflow extends UserOwnedEntity  {
 
     @Enumerated(EnumType.STRING)
     private ExpenseCategory expenseCategory; // XOR Constraint
+
+    private String customIncomeCategory;
+
+    private String customExpenseCategory;
 }
