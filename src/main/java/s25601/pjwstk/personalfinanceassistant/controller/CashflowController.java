@@ -194,12 +194,22 @@ public class CashflowController {
     @PostMapping("/add")
     public String addCashflow(@Valid @ModelAttribute("cashflow") Cashflow cashflow,
                               BindingResult result,
+                              @RequestParam(value="customIncomeCategoryNameNew", required=false) String customIncomeCategoryNameNew,
+                              @RequestParam(value="customExpenseCategoryNameNew", required=false) String customExpenseCategoryNameNew,
                               Model model) {
 
         User user = userService.getAuthenticatedUser();
 
+        // Override custom category fields if "new" text inputs are filled
+        if (customIncomeCategoryNameNew != null && !customIncomeCategoryNameNew.isBlank()) {
+            cashflow.setCustomIncomeCategoryName(customIncomeCategoryNameNew.trim());
+        }
+        if (customExpenseCategoryNameNew != null && !customExpenseCategoryNameNew.isBlank()) {
+            cashflow.setCustomExpenseCategoryName(customExpenseCategoryNameNew.trim());
+        }
+
         if (result.hasErrors()) {
-            // add model attributes again (same as GET)
+            // reload model attributes for dropdowns
             model.addAttribute("types", CashflowType.values());
             model.addAttribute("accounts", getAccessibleAccounts(user));
             model.addAttribute("incomeCategories", IncomeCategory.values());
