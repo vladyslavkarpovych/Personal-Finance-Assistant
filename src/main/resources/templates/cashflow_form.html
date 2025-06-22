@@ -41,9 +41,13 @@
           method="post"
           class="space-y-6">
 
+        <div th:if="${duplicateCategoryError}" class="text-red-600 font-semibold mb-4 border border-red-400 bg-red-100 p-3 rounded">
+            <p th:text="${duplicateCategoryError}"></p>
+        </div>
+
         <div>
             <label for="description" class="block font-medium mb-1">Description:</label>
-            <input id="description" type="text" th:field="*{description}"
+            <input id="description" type="text" th:field="*{description}" maxlength="250"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}"
                  class="text-red-600 mt-1 text-sm"></div>
@@ -76,8 +80,8 @@
                 <option th:each="cat : ${customIncomeCategories}" th:value="${cat.name}" th:text="${cat.name}"></option>
             </select>
 
-            <label for="customIncomeCategoryNameNew" class="block font-medium mb-1">Or enter new custom income category:</label>
-            <input id="customIncomeCategoryNameNew" type="text" name="customIncomeCategoryName"
+            <label for="newCustomIncomeCategory" class="block font-medium mb-1">New custom income category:</label>
+            <input id="newCustomIncomeCategory" type="text" th:field="*{newCustomIncomeCategoryName}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
@@ -98,8 +102,8 @@
                 <option th:each="cat : ${customExpenseCategories}" th:value="${cat.name}" th:text="${cat.name}"></option>
             </select>
 
-            <label for="customExpenseCategoryNameNew" class="block font-medium mb-1">Or enter new custom expense category:</label>
-            <input id="customExpenseCategoryNameNew" type="text" name="customExpenseCategoryName"
+            <label for="newCustomExpenseCategory" class="block font-medium mb-1">New custom expense category:</label>
+            <input id="newCustomExpenseCategory" type="text" th:field="*{newCustomExpenseCategoryName}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
