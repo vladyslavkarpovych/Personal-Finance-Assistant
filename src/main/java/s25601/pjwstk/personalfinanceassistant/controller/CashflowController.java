@@ -2,15 +2,13 @@ package s25601.pjwstk.personalfinanceassistant.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,19 +27,9 @@ public class CashflowController {
     @Autowired
     private UserRepository userRepository;
 
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userRepository.findByUsername(userDetails.getUsername()).orElse(null);
-        }
-        return null;
-    }
+    @Autowired
+    private UserService userService;
 
-    // Helper method to get all accessible accounts: owned + shared
     private List<Account> getAccessibleAccounts(User user) {
         List<Account> owned = accountRepository.findByUserId(user.getId());
         List<Account> shared = accountRepository.findBySharedUsersId(user.getId());
@@ -58,10 +46,7 @@ public class CashflowController {
             @RequestParam(required = false) String account,
             Model model) {
 
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+        User user = userService.getAuthenticatedUser();
 
         LocalDate fromDate = null;
         LocalDate toDate = null;
@@ -91,10 +76,8 @@ public class CashflowController {
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
 
-            // UPDATED: use accessible accounts (owned + shared)
             model.addAttribute("accounts", getAccessibleAccounts(user));
 
-            // pass back the filters as is
             model.addAttribute("selectedType", type);
             model.addAttribute("selectedCategory", category);
             model.addAttribute("selectedDateFrom", dateFrom);
@@ -178,19 +161,16 @@ public class CashflowController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         Cashflow cashflow = new Cashflow();
         cashflow.setDate(java.time.LocalDate.now());
-        cashflow.setType(CashflowType.INCOME);  // default to INCOME for better UX
+        cashflow.setType(CashflowType.INCOME);
         model.addAttribute("cashflow", cashflow);
 
         model.addAttribute("types", CashflowType.values());
 
-        // UPDATED: use accessible accounts (owned + shared)
         model.addAttribute("accounts", getAccessibleAccounts(user));
 
         model.addAttribute("incomeCategories", IncomeCategory.values());
@@ -203,15 +183,12 @@ public class CashflowController {
     public String addCashflow(@Valid @ModelAttribute("cashflow") Cashflow cashflow,
                               BindingResult result,
                               Model model) {
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
 
-            // UPDATED: use accessible accounts (owned + shared)
             model.addAttribute("accounts", getAccessibleAccounts(user));
 
             model.addAttribute("incomeCategories", IncomeCategory.values());
@@ -246,10 +223,8 @@ public class CashflowController {
 
     @PostMapping("/delete/{id}")
     public String deleteCashflow(@PathVariable Long id) {
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
         if (cashflow == null || !cashflow.getUser().getId().equals(user.getId())) {
@@ -271,10 +246,8 @@ public class CashflowController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         Cashflow cashflow = cashflowRepository.findById(id).orElse(null);
         if (cashflow == null || !cashflow.getUser().getId().equals(user.getId())) {
@@ -298,10 +271,8 @@ public class CashflowController {
                                  @Valid @ModelAttribute("cashflow") Cashflow updatedCashflow,
                                  BindingResult result,
                                  Model model) {
-        User user = getCurrentUser();
-        if (user == null) {
-            return "redirect:/login";
-        }
+
+        User user = userService.getAuthenticatedUser();
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
@@ -319,14 +290,12 @@ public class CashflowController {
             return "redirect:/profile";
         }
 
-        // Reverse old income effect if needed
         Account oldAccount = existingCashflow.getAccount();
         if (oldAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
             oldAccount.setBalance(oldAccount.getBalance().subtract(existingCashflow.getAmount()));
             accountRepository.save(oldAccount);
         }
 
-        // Update fields
         existingCashflow.setDescription(updatedCashflow.getDescription());
         existingCashflow.setType(updatedCashflow.getType());
         existingCashflow.setAmount(updatedCashflow.getAmount());
@@ -344,7 +313,6 @@ public class CashflowController {
 
         cashflowRepository.save(existingCashflow);
 
-        // Apply new income effect if applicable
         Account newAccount = existingCashflow.getAccount();
         if (newAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
             newAccount.setBalance(newAccount.getBalance().add(existingCashflow.getAmount()));

@@ -7,7 +7,6 @@ import s25601.pjwstk.personalfinanceassistant.model.Notification;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 

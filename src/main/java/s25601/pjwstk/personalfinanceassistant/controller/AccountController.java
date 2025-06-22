@@ -10,13 +10,12 @@ import s25601.pjwstk.personalfinanceassistant.model.Account;
 import s25601.pjwstk.personalfinanceassistant.model.User;
 import s25601.pjwstk.personalfinanceassistant.repository.AccountRepository;
 import s25601.pjwstk.personalfinanceassistant.repository.UserRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import s25601.pjwstk.personalfinanceassistant.service.AccountService;
+import s25601.pjwstk.personalfinanceassistant.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/accounts")
@@ -28,28 +27,23 @@ public class AccountController {
     @Autowired
     private UserRepository userRepository;
 
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByUsername(auth.getName()).orElse(null);
-    }
+    @Autowired
+    private UserService userService;
 
-    private List<Account> getAccessibleAccounts(User user) {
-        List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
-        List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
-        return Stream.concat(ownedAccounts.stream(), sharedAccounts.stream()).distinct().toList();
-    }
+    @Autowired
+    private AccountService accountService;
 
     private boolean canShareWithUser(User user) {
-        long totalAccounts = getAccessibleAccounts(user).size();
+        long totalAccounts = accountService.getAccessibleAccounts(user).size();
         return totalAccounts < User.MAX_PROFILES;
     }
 
     @GetMapping
     public String viewAccounts(Model model) {
-        User currentUser = getCurrentUser();
+        User currentUser = userService.getCurrentUser();
         if (currentUser == null) return "redirect:/login";
 
-        List<Account> accounts = getAccessibleAccounts(currentUser);
+        List<Account> accounts = accountService.getAccessibleAccounts(currentUser);
 
         // Prepare filtered shared usernames excluding current user per account
         Map<Long, String> filteredSharedUsernames = new HashMap<>();
@@ -76,8 +70,8 @@ public class AccountController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        User user = getCurrentUser();
-        List<Account> accessibleAccounts = getAccessibleAccounts(user);
+        User user = userService.getCurrentUser();
+        List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
         long totalAccounts = accessibleAccounts.size();
 
         model.addAttribute("maxAccountsReached", totalAccounts >= User.MAX_PROFILES);
@@ -92,10 +86,10 @@ public class AccountController {
                                 BindingResult result,
                                 @RequestParam(name = "sharedUsernames", required = false) String sharedUsernames,
                                 Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
-        long totalAccounts = getAccessibleAccounts(user).size();
+        long totalAccounts = accountService.getAccessibleAccounts(user).size();
         if (totalAccounts >= User.MAX_PROFILES) {
             result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts (owned + shared).");
             return "account_form";
@@ -148,7 +142,7 @@ public class AccountController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -163,7 +157,7 @@ public class AccountController {
     public String updateAccount(@PathVariable("id") Long id,
                                 @Valid @ModelAttribute("account") Account updatedAccount,
                                 BindingResult result) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
         Optional<Account> optionalAccount = accountRepository.findById(id);
@@ -186,7 +180,7 @@ public class AccountController {
 
     @PostMapping("/delete/{id}")
     public String deleteAccount(@PathVariable("id") Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isPresent() && optionalAccount.get().getUser().equals(user)) {
@@ -198,7 +192,7 @@ public class AccountController {
 
     @GetMapping("/share/{id}")
     public String showShareForm(@PathVariable("id") Long id, Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -213,7 +207,7 @@ public class AccountController {
     public String shareAccount(@PathVariable("id") Long id,
                                @RequestParam("username") String username,
                                Model model) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
@@ -254,7 +248,7 @@ public class AccountController {
     @PostMapping("/share/{id}/remove")
     public String removeSharedUser(@PathVariable("id") Long id,
                                    @RequestParam("userId") Long userId) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
