@@ -155,6 +155,46 @@
     </div>
 </section>
 
+<section class="max-w-6xl mx-auto mb-12">
+    <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl font-semibold text-gray-700">🎯 Your Financial Goals</h2>
+        <a th:href="@{/profile/goals/add}" class="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600">+ Add Goal</a>
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="w-full text-sm text-left border border-gray-200">
+            <thead class="bg-indigo-100">
+            <tr>
+                <th class="px-4 py-2">Goal</th>
+                <th class="px-4 py-2">Target</th>
+                <th class="px-4 py-2">Saved</th>
+                <th class="px-4 py-2">Due Date</th>
+                <th class="px-4 py-2">Progress</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="goal : ${goals}" class="border-t">
+                <td class="px-4 py-2" th:text="${goal.name}">Goal Name</td>
+                <td class="px-4 py-2" th:text="${goal.targetAmount}">Target</td>
+                <!-- Show the progress value based on net balance capped at target -->
+                <td class="px-4 py-2" th:text="${goalProgressMap[goal.id]}">Saved</td>
+                <td class="px-4 py-2" th:text="${goal.dueDate}">Due</td>
+                <td class="px-4 py-2">
+                    <progress th:value="${goalProgressMap[goal.id]}" th:max="${goal.targetAmount}"></progress>
+                    <span th:if="${goalProgressMap[goal.id].compareTo(goal.targetAmount) >= 0}" class="ml-2 text-green-600 font-semibold">✔ Completed</span>
+                </td>
+                <td class="px-4 py-2 space-x-2">
+                    <a th:href="@{/profile/goals/edit/{id}(id=${goal.id})}" class="text-blue-600 hover:underline">Edit</a>
+                    <a th:href="@{/profile/goals/delete/{id}(id=${goal.id})}"
+                       onclick="return confirm('Are you sure you want to delete this goal?');"
+                       class="text-red-600 hover:underline">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
 <!-- Notifications -->
 <section class="max-w-6xl mx-auto mb-12">
     <h2 class="text-2xl font-semibold text-gray-700 mb-4">🔔 Notifications</h2>
