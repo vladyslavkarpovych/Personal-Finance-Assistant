@@ -19,7 +19,7 @@ public class NotificationService {
     }
 
     public void notifyBudgetExceeded(User user, String category, String period, String limit, String spent) {
-        List<Notification> existing = notificationRepository.findUnreadByUserAndCategoryAndPeriod(user, category, period); // Qualified Association
+        List<Notification> existing = notificationRepository.findUnreadByUserAndCategoryAndPeriod(user, category, period);
 
         if (existing.isEmpty()) {
             String message = String.format(

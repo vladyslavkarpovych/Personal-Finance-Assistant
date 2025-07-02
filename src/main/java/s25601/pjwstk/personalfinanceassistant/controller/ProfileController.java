@@ -19,7 +19,6 @@ import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/profile")
@@ -30,12 +29,6 @@ public class ProfileController {
 
     @Autowired
     private CashflowRepository cashflowRepository;
-
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private BudgetRepository budgetRepository;

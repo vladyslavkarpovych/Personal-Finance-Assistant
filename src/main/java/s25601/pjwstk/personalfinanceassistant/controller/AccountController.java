@@ -33,11 +33,13 @@ public class AccountController {
     @Autowired
     private AccountService accountService;
 
+    // Limiting the total accounts to User.MAX_PROFILES
     private boolean canShareWithUser(User user) {
         long totalAccounts = accountService.getAccessibleAccounts(user).size();
         return totalAccounts < User.MAX_PROFILES;
     }
 
+    // List accounts accessible by current user
     @GetMapping
     public String viewAccounts(Model model) {
         User currentUser = userService.getCurrentUser();
@@ -45,12 +47,10 @@ public class AccountController {
 
         List<Account> accounts = accountService.getAccessibleAccounts(currentUser);
 
-        // Prepare filtered shared usernames excluding current user per account
         Map<Long, String> filteredSharedUsernames = new HashMap<>();
         for (Account account : accounts) {
-            // Get all shared users + owner (excluding current user)
             Set<User> allRelatedUsers = new HashSet<>(account.getSharedUsers());
-            allRelatedUsers.add(account.getUser()); // add the owner
+            allRelatedUsers.add(account.getUser());
 
             String sharedNames = allRelatedUsers.stream()
                     .filter(u -> !u.getId().equals(currentUser.getId()))
@@ -89,6 +89,7 @@ public class AccountController {
         User user = userService.getCurrentUser();
         if (user == null) return "redirect:/login";
 
+        // Enforce max accounts limit per user
         long totalAccounts = accountService.getAccessibleAccounts(user).size();
         if (totalAccounts >= User.MAX_PROFILES) {
             result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts (owned + shared).");
@@ -125,6 +126,7 @@ public class AccountController {
                     return "account_form";
                 }
 
+                // Prevent sharing with self
                 if (!canShareWithUser(shareUser)) {
                     model.addAttribute("account", account);
                     model.addAttribute("sharedUsernames", sharedUsernames);
@@ -145,6 +147,7 @@ public class AccountController {
         User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
+        // Only allow owner to edit the account
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
             return "redirect:/accounts";
         }
@@ -183,6 +186,7 @@ public class AccountController {
         User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
+        // Delete only if current user owns the account
         if (optionalAccount.isPresent() && optionalAccount.get().getUser().equals(user)) {
             accountRepository.delete(optionalAccount.get());
         }
@@ -190,11 +194,13 @@ public class AccountController {
         return "redirect:/accounts";
     }
 
+    // Show form to share account with another user
     @GetMapping("/share/{id}")
     public String showShareForm(@PathVariable("id") Long id, Model model) {
         User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
+        // Only owner can access the share form
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
             return "redirect:/accounts";
         }
@@ -203,6 +209,7 @@ public class AccountController {
         return "account_share_form";
     }
 
+    // Handle sharing account with another user
     @PostMapping("/share/{id}")
     public String shareAccount(@PathVariable("id") Long id,
                                @RequestParam("username") String username,
@@ -210,6 +217,7 @@ public class AccountController {
         User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
+        // Only owner can share the account
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
             return "redirect:/accounts";
         }
@@ -217,6 +225,7 @@ public class AccountController {
         Account account = optionalAccount.get();
         Optional<User> userToShareWith = userRepository.findByUsername(username);
 
+        // Validate that user to share with exists
         if (userToShareWith.isEmpty()) {
             model.addAttribute("account", account);
             model.addAttribute("error", "User '" + username + "' not found.");
@@ -225,12 +234,14 @@ public class AccountController {
 
         User shareUser = userToShareWith.get();
 
+        // Prevent sharing with self
         if (shareUser.equals(user)) {
             model.addAttribute("account", account);
             model.addAttribute("error", "Cannot share account with yourself.");
             return "account_share_form";
         }
 
+        // Check if the user can still have more accounts shared with
         if (!canShareWithUser(shareUser)) {
             model.addAttribute("account", account);
             model.addAttribute("error", "User '" + username + "' already has the maximum number of accounts.");
@@ -251,10 +262,12 @@ public class AccountController {
         User user = userService.getCurrentUser();
         Optional<Account> optionalAccount = accountRepository.findById(id);
 
+        // Only owner can remove shared users
         if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
             return "redirect:/accounts";
         }
 
+        // Remove user with the given ID from shared users
         Account account = optionalAccount.get();
         account.getSharedUsers().removeIf(u -> u.getId().equals(userId));
         accountRepository.save(account);

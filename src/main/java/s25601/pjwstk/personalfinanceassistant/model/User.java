@@ -18,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class User {
 
-    public static final int MAX_PROFILES = 3; // Class Attribute
+    public static final int MAX_PROFILES = 3;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,7 @@ public class User {
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Column(nullable = false) // Attribute Constraint
+    @Column(nullable = false)
     private String password;
 
     @Email(message = "Email should be valid")
@@ -43,5 +43,4 @@ public class User {
     public static int getMaxProfiles() { // Class Method
         return MAX_PROFILES;
     }
-
 }

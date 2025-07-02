@@ -14,6 +14,7 @@ import s25601.pjwstk.personalfinanceassistant.service.CustomUserDetailsService;
 @Configuration
 public class SecurityConfig {
 
+    // Load user data from DB
     private final CustomUserDetailsService userDetailsService;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService) {

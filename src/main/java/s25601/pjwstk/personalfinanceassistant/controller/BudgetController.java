@@ -46,7 +46,6 @@ public class BudgetController {
         LocalDate today = LocalDate.now();
 
         for (Budget b : budgets) {
-            // Calculate period start and end dates
             LocalDate[] periodRange = BudgetPeriodUtil.getPeriodStartEnd(b.getPeriod(), today);
             LocalDate startDate = periodRange[0];
             LocalDate endDate = periodRange[1];

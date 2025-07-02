@@ -28,9 +28,6 @@ public class CashflowController {
     private AccountRepository accountRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -39,6 +36,10 @@ public class CashflowController {
     @Autowired
     private CustomExpenseCategoryRepository customExpenseCategoryRepository;
 
+    /**
+     * Helper method to get all accounts accessible by the given user.
+     * This includes both owned accounts and accounts shared with the user
+     */
     private List<Account> getAccessibleAccounts(User user) {
         List<Account> owned = accountRepository.findByUserId(user.getId());
         List<Account> shared = accountRepository.findBySharedUsersId(user.getId());
@@ -46,6 +47,7 @@ public class CashflowController {
         return owned.stream().distinct().toList();
     }
 
+    // Filtering by type, category, date range, and account.
     @GetMapping
     public String listCashflows(
             @RequestParam(required = false) String type,
@@ -77,7 +79,7 @@ public class CashflowController {
 
         if (dateError != null) {
             model.addAttribute("dateError", dateError);
-            model.addAttribute("cashflows", List.<Cashflow>of()); // empty list
+            model.addAttribute("cashflows", List.<Cashflow>of());
             model.addAttribute("filteredTotal", BigDecimal.ZERO);
             model.addAttribute("incomeTotal", BigDecimal.ZERO);
             model.addAttribute("expenseTotal", BigDecimal.ZERO);
@@ -98,6 +100,7 @@ public class CashflowController {
         final LocalDate fromDateFinal = fromDate;
         final LocalDate toDateFinal = toDate;
 
+        // Fetch all cashflows related to user's accessible accounts
         List<Account> accessibleAccounts = getAccessibleAccounts(user);
         List<Cashflow> allCashflows = cashflowRepository.findByAccountIn(accessibleAccounts);
 
@@ -108,6 +111,7 @@ public class CashflowController {
                 match &= cf.getType().name().equalsIgnoreCase(type);
             }
 
+            // Filter by category depending on income or expense
             if (category != null && !category.isEmpty()) {
                 String cat = cf.getType() == CashflowType.INCOME ?
                         (cf.getIncomeCategory() != null ? cf.getIncomeCategory().name() : "") :
@@ -115,6 +119,7 @@ public class CashflowController {
                 match &= cat.equalsIgnoreCase(category);
             }
 
+            // Filter by date range
             if (fromDateFinal != null) {
                 match &= !cf.getDate().isBefore(fromDateFinal);  // cf.date >= dateFrom
             }
@@ -131,6 +136,7 @@ public class CashflowController {
             return match;
         }).toList();
 
+        // Calculate totals for filtered cashflows
         BigDecimal filteredTotal = filtered.stream()
                 .map(Cashflow::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -147,6 +153,7 @@ public class CashflowController {
 
         BigDecimal netTotal = incomeTotal.subtract(expenseTotal);
 
+        // Add attributes to model for the view
         model.addAttribute("cashflows", filtered);
         model.addAttribute("filteredTotal", filteredTotal);
         model.addAttribute("incomeTotal", incomeTotal);
@@ -371,20 +378,17 @@ public class CashflowController {
             return "redirect:/profile";
         }
 
-        // Adjust old account balance if needed (remove old amount)
         Account oldAccount = existingCashflow.getAccount();
         if (oldAccount != null && existingCashflow.getType() == CashflowType.INCOME && existingCashflow.getAmount() != null) {
             oldAccount.setBalance(oldAccount.getBalance().subtract(existingCashflow.getAmount()));
             accountRepository.save(oldAccount);
         }
 
-        // Update fields
         existingCashflow.setDescription(updatedCashflow.getDescription());
         existingCashflow.setType(updatedCashflow.getType());
         existingCashflow.setAmount(updatedCashflow.getAmount());
         existingCashflow.setDate(updatedCashflow.getDate());
 
-        // Update account
         if (updatedCashflow.getAccount() != null && updatedCashflow.getAccount().getId() != null) {
             Account newAccount = accountRepository.findById(updatedCashflow.getAccount().getId()).orElse(null);
             existingCashflow.setAccount(newAccount);

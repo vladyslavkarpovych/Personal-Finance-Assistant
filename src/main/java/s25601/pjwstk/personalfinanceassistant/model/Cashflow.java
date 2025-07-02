@@ -22,7 +22,7 @@ public class Cashflow extends UserOwnedEntity  {
     private String description; // Optional Attribute
 
     @Enumerated(EnumType.STRING)
-    private CashflowType type; // INCOME or EXPENSE
+    private CashflowType type;
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = false)
@@ -33,13 +33,13 @@ public class Cashflow extends UserOwnedEntity  {
 
     @ManyToOne
     @JoinColumn(name = "account_id")
-    private Account account; // Complex Attribute
+    private Account account;
 
     @Enumerated(EnumType.STRING)
-    private IncomeCategory incomeCategory; // XOR Constraint
+    private IncomeCategory incomeCategory;
 
     @Enumerated(EnumType.STRING)
-    private ExpenseCategory expenseCategory; // XOR Constraint
+    private ExpenseCategory expenseCategory;
 
     @Column(nullable = true)
     private String customIncomeCategoryName;

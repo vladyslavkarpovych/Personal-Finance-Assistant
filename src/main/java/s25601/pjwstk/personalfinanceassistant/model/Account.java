@@ -23,7 +23,7 @@ public class Account extends UserOwnedEntity {
     private BigDecimal balance;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cashflow> cashflows = new ArrayList<>(); // Composition
+    private List<Cashflow> cashflows = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
