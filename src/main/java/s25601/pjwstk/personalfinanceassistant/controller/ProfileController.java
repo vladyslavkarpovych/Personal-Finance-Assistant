@@ -5,20 +5,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
 import s25601.pjwstk.personalfinanceassistant.service.AccountService;
+import s25601.pjwstk.personalfinanceassistant.service.GoalService;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/profile")
@@ -37,6 +37,9 @@ public class ProfileController {
     private NotificationRepository notificationRepository;
 
     @Autowired
+    private GoalRepository goalRepository;
+
+    @Autowired
     private NotificationService notificationService;
 
     @Autowired
@@ -44,6 +47,7 @@ public class ProfileController {
 
     @Autowired
     private AccountService accountService;
+
 
     @GetMapping("")
     public String showUserProfile(Model model) {
@@ -109,6 +113,19 @@ public class ProfileController {
         model.addAttribute("currentUser", user);
         model.addAttribute("budgets", budgets);
 
+        List<Goal> goals = goalRepository.findByUser(user);
+        model.addAttribute("goals", goals);
+
+        Map<Long, BigDecimal> goalProgressMap = new HashMap<>();
+        for (Goal goal : goals) {
+            BigDecimal targetAmount = goal.getTargetAmount() != null ? goal.getTargetAmount() : BigDecimal.ZERO;
+            BigDecimal progressAmount = netTotal.min(targetAmount);
+            goalProgressMap.put(goal.getId(), progressAmount);
+        }
+
+        model.addAttribute("goals", goals);
+        model.addAttribute("goalProgressMap", goalProgressMap);
+
         return "profile_view";
     }
 
@@ -137,5 +154,82 @@ public class ProfileController {
         profileRepository.save(profile);
         model.addAttribute("message", "Profile created successfully!");
         return "profile_success";
+    }
+
+    @GetMapping("/goals")
+    public String viewGoals(Model model) {
+        User user = userService.getAuthenticatedUser();
+        List<Goal> goals = goalRepository.findByUser(user);
+        model.addAttribute("goals", goals);
+        return "goals_view";
+    }
+
+    @GetMapping("/goals/add")
+    public String showAddGoalForm(Model model) {
+        model.addAttribute("financialGoal", new Goal());
+        return "goal_form";
+    }
+
+    @PostMapping("/goals/add")
+    public String addGoal(@Valid @ModelAttribute Goal financialGoal,
+                          BindingResult result,
+                          Model model) {
+        User user = userService.getAuthenticatedUser();
+        financialGoal.setUser(user);
+
+        if (result.hasErrors()) {
+            return "goal_form";
+        }
+
+        goalRepository.save(financialGoal);
+        return "redirect:/profile";
+    }
+
+    // Show edit form
+    @GetMapping("/goals/edit/{id}")
+    public String showEditGoalForm(@PathVariable("id") Long id, Model model) {
+        User user = userService.getAuthenticatedUser();
+        Goal goal = goalRepository.findById(id)
+                .filter(g -> g.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid goal Id:" + id));
+        model.addAttribute("financialGoal", goal);
+        return "goal_form";
+    }
+
+    // Update goal
+    @PostMapping("/goals/edit/{id}")
+    public String updateGoal(@PathVariable("id") Long id,
+                             @Valid @ModelAttribute("financialGoal") Goal financialGoal,
+                             BindingResult result, Model model) {
+        User user = userService.getAuthenticatedUser();
+
+        if (result.hasErrors()) {
+            return "goal_form";
+        }
+
+        Goal existingGoal = goalRepository.findById(id)
+                .filter(g -> g.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid goal Id:" + id));
+
+        // Update fields manually to avoid changing user and id
+        existingGoal.setName(financialGoal.getName());
+        existingGoal.setTargetAmount(financialGoal.getTargetAmount());
+        existingGoal.setDueDate(financialGoal.getDueDate());
+        existingGoal.setCurrentAmount(financialGoal.getCurrentAmount());
+
+        goalRepository.save(existingGoal);
+
+        return "redirect:/profile";
+    }
+
+    // Delete goal
+    @GetMapping("/goals/delete/{id}")
+    public String deleteGoal(@PathVariable("id") Long id) {
+        User user = userService.getAuthenticatedUser();
+        Goal goal = goalRepository.findById(id)
+                .filter(g -> g.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid goal Id:" + id));
+        goalRepository.delete(goal);
+        return "redirect:/profile";
     }
 }

@@ -49,9 +49,18 @@
                 <td class="px-6 py-4 text-sm font-medium text-indigo-700" th:text="${account.name}">Main Account</td>
                 <td class="px-6 py-4 text-sm" th:text="${account.currency}">USD</td>
                 <td class="px-6 py-4 text-sm" th:text="${account.balance}">0.00</td>
-                <td class="px-6 py-4 text-sm font-semibold"
-                    th:text="${#strings.isEmpty(filteredSharedUsernames[account.id]) ? 'No' : 'Shared with: ' + filteredSharedUsernames[account.id]}">
-                    No
+                <td class="px-6 py-4 text-sm font-semibold">
+                    <span th:if="${#strings.isEmpty(filteredSharedUsernames[account.id])}">
+                        No
+                    </span>
+                    <span th:if="${!#strings.isEmpty(filteredSharedUsernames[account.id])}">
+                        Yes
+                        <button type="button"
+                                class="ml-2 text-blue-600 hover:underline text-sm"
+                                th:attr="onclick=|openModal('${account.id}')|">
+                            View
+                        </button>
+                    </span>
                 </td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-3">
@@ -93,6 +102,32 @@
         </table>
     </div>
 
+    <!-- Modal per account -->
+    <div th:each="account : ${accounts}" th:id="'modal-' + ${account.id}"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <button type="button"
+                    class="absolute top-2 right-3 text-gray-500 hover:text-gray-800"
+                    th:attr="onclick=|closeModal('${account.id}')|">
+                ✖
+            </button>
+            <h3 class="text-lg font-semibold mb-4">Currently Shared With:</h3>
+            <ul>
+                <li th:each="user : ${account.sharedUsers}"
+                    class="flex justify-between items-center border p-2 rounded mb-2">
+                    <span th:text="${user.username}">username</span>
+                    <form th:action="@{/accounts/share/{id}/remove(id=${account.id})}" method="post" class="inline">
+                        <input type="hidden" name="userId" th:value="${user.id}" />
+                        <button type="submit"
+                                class="text-red-600 hover:underline text-sm font-medium">
+                            Remove
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+
     <div class="mt-8 text-center">
         <a th:href="@{/profile}" class="text-indigo-600 hover:underline text-sm font-medium">← Back to Profile</a>
     </div>
@@ -102,6 +137,25 @@
 <footer class="text-center text-sm text-gray-500 py-6 bg-gray-100 mt-12">
     &copy; 2025 Personal Finance Assistant. All rights reserved.
 </footer>
+
+<!-- Modal JavaScript -->
+<script>
+    function openModal(accountId) {
+        document.getElementById('modal-' + accountId).classList.remove('hidden');
+    }
+
+    function closeModal(accountId) {
+        document.getElementById('modal-' + accountId).classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('[id^="modal-"]').forEach(modal => {
+                modal.classList.add('hidden');
+            });
+        }
+    });
+</script>
 
 </body>
 </html>
