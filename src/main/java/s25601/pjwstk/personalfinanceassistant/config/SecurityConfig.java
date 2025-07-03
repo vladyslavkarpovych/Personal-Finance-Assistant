@@ -14,7 +14,7 @@ import s25601.pjwstk.personalfinanceassistant.service.CustomUserDetailsService;
 @Configuration
 public class SecurityConfig {
 
-    // Load user data from DB
+    // Custom service to load user-specific data from DB
     private final CustomUserDetailsService userDetailsService;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService) {
@@ -23,11 +23,13 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+        // Creates a password encoder that securely hashes passwords
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
+        // Used to check login info based on user data and password encoder
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
@@ -43,19 +45,19 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/register", "/h2-console/**", "/css/**", "/js/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/", "/register", "/h2-console/**", "/css/**", "/js/**").permitAll() // Allow everyone to access
+                        .anyRequest().authenticated() // Require login for all other pages
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .permitAll()
-                        .defaultSuccessUrl("/profile", true)
-                        .failureUrl("/login?error=true")
+                        .loginPage("/login") // Use custom login page at /login
+                        .permitAll() // Everyone can access login page
+                        .defaultSuccessUrl("/profile", true) // After successful login, go to /profile
+                        .failureUrl("/login?error=true") // If login fails, stay on login page with error
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .permitAll()
+                        .logoutUrl("/logout") // URL to trigger logout
+                        .logoutSuccessUrl("/") // After logout, redirect to home page
+                        .permitAll() // Everyone can logout
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"));
@@ -64,5 +66,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }

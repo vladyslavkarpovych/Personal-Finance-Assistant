@@ -18,29 +18,30 @@ import java.util.Set;
 @AllArgsConstructor
 public class User {
 
-    public static final int MAX_PROFILES = 3;
+    public static final int MAX_ACCOUNTS = 3; // class attribute
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // class attribute, primary key
 
     @NotBlank(message = "Username is required")
-    @Column(unique = true, nullable = false) // Unique Constraint
-    private String username;
+    @Column(unique = true, nullable = false)
+    private String username; // simple attribute, mandatory and unique Constraint
 
     @NotBlank(message = "Password is required")
     @Column(nullable = false)
-    private String password;
+    private String password; // simple attribute, mandatory
 
     @Email(message = "Email should be valid")
     @NotBlank(message = "Email is required")
     @Column(unique = true, nullable = false)
-    private String email;
+    private String email; // simple attribute, mandatory, unique, with email format validation
 
     @ManyToMany(mappedBy = "sharedUsers")
-    private Set<Account> sharedAccounts = new HashSet<>();
+    private Set<Account> sharedAccounts = new HashSet<>(); // multi-valued attribute, many-to-many association
 
+    // class method
     public static int getMaxProfiles() { // Class Method
-        return MAX_PROFILES;
+        return MAX_ACCOUNTS;
     }
 }

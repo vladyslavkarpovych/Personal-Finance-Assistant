@@ -36,10 +36,7 @@ public class CashflowController {
     @Autowired
     private CustomExpenseCategoryRepository customExpenseCategoryRepository;
 
-    /**
-     * Helper method to get all accounts accessible by the given user.
-     * This includes both owned accounts and accounts shared with the user
-     */
+    // Get accounts (owned & shared) accessible by the given user
     private List<Account> getAccessibleAccounts(User user) {
         List<Account> owned = accountRepository.findByUserId(user.getId());
         List<Account> shared = accountRepository.findBySharedUsersId(user.getId());

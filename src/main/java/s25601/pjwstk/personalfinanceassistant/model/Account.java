@@ -12,24 +12,26 @@ import java.util.Set;
 
 @Getter
 @Setter
-@Entity
+@Entity // Extent by @Entity (persistent class)
 public class Account extends UserOwnedEntity {
 
-    private String name;
+    private String name; // simple attribute
 
     @Enumerated(EnumType.STRING)
-    private Currency currency;
+    private Currency currency; // complex attribute
 
     private BigDecimal balance;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cashflow> cashflows = new ArrayList<>();
+    private List<Cashflow> cashflows = new ArrayList<>(); // multi-valued attribute, binary association, composition
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "account_shared_users",
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<User> sharedUsers = new HashSet<>();
+    private Set<User> sharedUsers = new HashSet<>(); // multi-valued attribute, binary association, unique users, ordered collection
+
+
 }

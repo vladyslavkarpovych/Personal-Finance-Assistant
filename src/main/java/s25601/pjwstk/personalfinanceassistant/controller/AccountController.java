@@ -33,10 +33,10 @@ public class AccountController {
     @Autowired
     private AccountService accountService;
 
-    // Limiting the total accounts to User.MAX_PROFILES
+    // Limiting the total accounts to User.MAX_ACCOUNTS
     private boolean canShareWithUser(User user) {
         long totalAccounts = accountService.getAccessibleAccounts(user).size();
-        return totalAccounts < User.MAX_PROFILES;
+        return totalAccounts < User.MAX_ACCOUNTS;
     }
 
     // List accounts accessible by current user
@@ -74,7 +74,7 @@ public class AccountController {
         List<Account> accessibleAccounts = accountService.getAccessibleAccounts(user);
         long totalAccounts = accessibleAccounts.size();
 
-        model.addAttribute("maxAccountsReached", totalAccounts >= User.MAX_PROFILES);
+        model.addAttribute("maxAccountsReached", totalAccounts >= User.MAX_ACCOUNTS);
         model.addAttribute("userAccountCount", totalAccounts);
         model.addAttribute("account", new Account());
         model.addAttribute("sharedUsernames", "");
@@ -91,8 +91,8 @@ public class AccountController {
 
         // Enforce max accounts limit per user
         long totalAccounts = accountService.getAccessibleAccounts(user).size();
-        if (totalAccounts >= User.MAX_PROFILES) {
-            result.reject("maxAccounts", "You cannot have more than " + User.MAX_PROFILES + " accounts (owned + shared).");
+        if (totalAccounts >= User.MAX_ACCOUNTS) {
+            result.reject("maxAccounts", "You cannot have more than " + User.MAX_ACCOUNTS + " accounts (owned + shared).");
             return "account_form";
         }
 
@@ -144,16 +144,21 @@ public class AccountController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
-        User user = userService.getCurrentUser();
-        Optional<Account> optionalAccount = accountRepository.findById(id);
-
-        // Only allow owner to edit the account
-        if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
+        if (!accountService.isAccountOwner(id)){
             return "redirect:/accounts";
         }
+        accountService.addAccountDetailsToModel(id, model);
 
-        model.addAttribute("account", optionalAccount.get());
         return "account_form";
+    }
+
+    @GetMapping("/sharedUsers/{id}")
+    public String getAccountUsers(@PathVariable("id") Long id, Model model) {
+        if (!accountService.isAccountOwner(id)){
+            return "redirect:/accounts";
+        }
+        accountService.addAccountDetailsToModel(id, model);
+        return "shared_users";
     }
 
     @PostMapping("/edit/{id}")
@@ -197,15 +202,11 @@ public class AccountController {
     // Show form to share account with another user
     @GetMapping("/share/{id}")
     public String showShareForm(@PathVariable("id") Long id, Model model) {
-        User user = userService.getCurrentUser();
-        Optional<Account> optionalAccount = accountRepository.findById(id);
-
         // Only owner can access the share form
-        if (optionalAccount.isEmpty() || !optionalAccount.get().getUser().equals(user)) {
+        if (!accountService.isAccountOwner(id)) {
             return "redirect:/accounts";
         }
-
-        model.addAttribute("account", optionalAccount.get());
+        accountService.addAccountDetailsToModel(id, model);
         return "account_share_form";
     }
 

@@ -18,19 +18,19 @@ import java.time.LocalDate;
 public class Goal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // class attribute, primary key
 
     @NotBlank(message = "Goal name is required")
-    private String name;
+    private String name; // attribute constraint: must be not blank
 
     @NotNull(message = "Target amount is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be positive")
-    private BigDecimal targetAmount;
+    private BigDecimal targetAmount; // attribute constraint:  must be positive and not null
 
     private BigDecimal currentAmount = BigDecimal.ZERO;
 
     @Future(message = "Due date must be in the future")
-    private LocalDate dueDate;
+    private LocalDate dueDate; // attribute constraint: must be in the future
 
     @ManyToOne
     @JoinColumn(name = "user_id")
