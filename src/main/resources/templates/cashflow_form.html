@@ -113,6 +113,7 @@
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <div th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"
                  class="text-red-600 mt-1 text-sm"></div>
+            <span id="amountError" class="text-red-600 mt-1 text-sm hidden">Amount must be a positive number.</span>
         </div>
 
         <div>
@@ -148,6 +149,21 @@
     </p>
 
 </main>
+<script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const amountInput = document.getElementById('amount');
+        const amountError = document.getElementById('amountError');
+        const amount = parseFloat(amountInput.value);
 
+        if (isNaN(amount) || amount < 0) {
+            e.preventDefault();
+            amountError.classList.remove('hidden');
+            amountInput.classList.add('border-red-500');
+        } else {
+            amountError.classList.add('hidden');
+            amountInput.classList.remove('border-red-500');
+        }
+    });
+</script>
 </body>
 </html>
