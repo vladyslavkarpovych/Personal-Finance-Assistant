@@ -9,7 +9,11 @@ import java.math.BigDecimal;
 @Entity // Extent - persistency
 @Getter
 @Setter
-public class Budget extends UserOwnedEntity {
+public class Budget {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Enumerated(EnumType.STRING)
     private ExpenseCategory category; // complex attribute
@@ -21,4 +25,8 @@ public class Budget extends UserOwnedEntity {
 
     @Transient
     private BigDecimal remaining; // derived attribute
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // Association to User
 }
