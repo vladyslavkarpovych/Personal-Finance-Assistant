@@ -22,7 +22,7 @@ public class Cashflow {
     private Long id;
 
     @Nullable
-    @Length(max = 250, message = "Description cannot exceed 250 characters")
+    @Length(max = 50, message = "Description cannot exceed 50 characters")
     private String description; // optional attribute
 
     @Enumerated(EnumType.STRING)

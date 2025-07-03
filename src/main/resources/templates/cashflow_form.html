@@ -47,7 +47,7 @@
 
         <div>
             <label for="description" class="block font-medium mb-1">Description:</label>
-            <input id="description" type="text" th:field="*{description}" maxlength="250"
+            <input id="description" type="text" th:field="*{description}" maxlength="50"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}"
                  class="text-red-600 mt-1 text-sm"></div>
