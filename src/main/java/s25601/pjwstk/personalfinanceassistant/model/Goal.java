@@ -18,7 +18,7 @@ import java.time.LocalDate;
 public class Goal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // class attribute, primary key
+    private Long id; // primary key
 
     @NotBlank(message = "Goal name is required")
     private String name; // attribute constraint: must be not blank

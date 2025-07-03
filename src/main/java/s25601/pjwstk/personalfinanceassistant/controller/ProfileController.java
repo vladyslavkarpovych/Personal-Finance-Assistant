@@ -24,9 +24,6 @@ import java.util.Map;
 public class ProfileController {
 
     @Autowired
-    private ProfileRepository profileRepository;
-
-    @Autowired
     private CashflowRepository cashflowRepository;
 
     @Autowired
@@ -126,41 +123,6 @@ public class ProfileController {
         model.addAttribute("goalProgressMap", goalProgressMap);
 
         return "profile_view";
-    }
-
-    @GetMapping("/create")
-    public String showCreateProfileForm(Model model) {
-        model.addAttribute("profile", new Profile());
-        return "profile_form";
-    }
-
-    @PostMapping("/create")
-    public String createProfile(@Valid @ModelAttribute("profile") Profile profile,
-                                BindingResult result,
-                                Model model) {
-        User user = userService.getCurrentUser();
-        if (user == null) {
-            result.reject("user", "No logged-in user found.");
-            return "profile_form";
-        }
-
-        profile.setUser(user);
-
-        if (result.hasErrors()) {
-            return "profile_form";
-        }
-
-        profileRepository.save(profile);
-        model.addAttribute("message", "Profile created successfully!");
-        return "profile_success";
-    }
-
-    @GetMapping("/goals")
-    public String viewGoals(Model model) {
-        User user = userService.getAuthenticatedUser();
-        List<Goal> goals = goalRepository.findByUser(user);
-        model.addAttribute("goals", goals);
-        return "goals_view";
     }
 
     @GetMapping("/goals/add")

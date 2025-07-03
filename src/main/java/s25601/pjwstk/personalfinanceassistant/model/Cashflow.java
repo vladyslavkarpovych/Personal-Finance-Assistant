@@ -15,7 +15,11 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-public class Cashflow extends UserOwnedEntity  {
+public class Cashflow {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Nullable
     @Length(max = 250, message = "Description cannot exceed 250 characters")
@@ -52,4 +56,8 @@ public class Cashflow extends UserOwnedEntity  {
 
     @Column(nullable = true)
     private String newCustomExpenseCategoryName;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // Association to User
 }

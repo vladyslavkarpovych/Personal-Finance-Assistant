@@ -22,7 +22,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // class attribute, primary key
+    private Long id; // primary key
 
     @NotBlank(message = "Username is required")
     @Column(unique = true, nullable = false)

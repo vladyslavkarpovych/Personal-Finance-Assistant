@@ -13,7 +13,11 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity // Extent by @Entity (persistent class)
-public class Account extends UserOwnedEntity {
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String name; // simple attribute
 
@@ -33,5 +37,7 @@ public class Account extends UserOwnedEntity {
     )
     private Set<User> sharedUsers = new HashSet<>(); // multi-valued attribute, binary association, unique users, ordered collection
 
-
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // Association to User
 }
