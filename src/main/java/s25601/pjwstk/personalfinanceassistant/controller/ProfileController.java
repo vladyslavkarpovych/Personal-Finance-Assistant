@@ -15,6 +15,7 @@ import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +111,8 @@ public class ProfileController {
         model.addAttribute("budgets", budgets);
 
         List<Goal> goals = goalRepository.findByUser(user);
+        // Sort using Comparable in Goal
+        Collections.sort(goals);
         model.addAttribute("goals", goals);
 
         Map<Long, BigDecimal> goalProgressMap = new HashMap<>();

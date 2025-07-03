@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 
-public class Goal {
+public class Goal implements Comparable<Goal> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // primary key
@@ -35,4 +35,18 @@ public class Goal {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Override
+    public int compareTo(Goal other) {
+        if (this.dueDate == null && other.dueDate == null) {
+            return 0;
+        }
+        if (this.dueDate == null) {
+            return 1; // goals with null dueDate go after goals with dueDate
+        }
+        if (other.dueDate == null) {
+            return -1; // other goal with null dueDate go after this goal with dueDate
+        }
+        return this.dueDate.compareTo(other.dueDate);
+    }
 }
