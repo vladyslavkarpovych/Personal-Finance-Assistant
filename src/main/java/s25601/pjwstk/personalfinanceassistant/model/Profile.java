@@ -14,15 +14,15 @@ public class Profile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // class attribute, primary key
 
     @NotBlank(message = "Full name is required")
-    private String fullName;
+    private String fullName; // simple attribute, mandatory
 
     @Min(value = 0, message = "Monthly income must be positive") // Custom Constraint
-    private double monthlyIncome;
+    private double monthlyIncome; // simple attribute, custom constraint
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    private User user; // binary association attribute
 }

@@ -19,21 +19,21 @@ public class Cashflow extends UserOwnedEntity  {
 
     @Nullable
     @Length(max = 250, message = "Description cannot exceed 250 characters")
-    private String description; // Optional Attribute
+    private String description; // optional attribute
 
     @Enumerated(EnumType.STRING)
-    private CashflowType type;
+    private CashflowType type; // complex attribute
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = false)
-    private BigDecimal amount;
+    private BigDecimal amount; // simple attribute, constrained
 
     @NotNull
-    private LocalDate date;
+    private LocalDate date; // simple attribute, constrained
 
     @ManyToOne
     @JoinColumn(name = "account_id")
-    private Account account;
+    private Account account; // association attribute
 
     @Enumerated(EnumType.STRING)
     private IncomeCategory incomeCategory;

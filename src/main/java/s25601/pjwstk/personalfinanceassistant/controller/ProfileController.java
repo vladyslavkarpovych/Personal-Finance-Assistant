@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import s25601.pjwstk.personalfinanceassistant.model.*;
 import s25601.pjwstk.personalfinanceassistant.repository.*;
 import s25601.pjwstk.personalfinanceassistant.service.AccountService;
-import s25601.pjwstk.personalfinanceassistant.service.GoalService;
 import s25601.pjwstk.personalfinanceassistant.service.NotificationService;
 import s25601.pjwstk.personalfinanceassistant.service.UserService;
 import s25601.pjwstk.personalfinanceassistant.util.BudgetPeriodUtil;

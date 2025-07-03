@@ -18,6 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    // load user-specific data during authentication, based on a username
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
@@ -25,8 +26,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword())  // password should be encoded (bcrypt)
-                .authorities(Collections.emptyList()) // you can add roles/authorities later
+                .password(user.getPassword())  // password is encoded (bcrypt)
+                .authorities(Collections.emptyList())
                 .build();
     }
 }
