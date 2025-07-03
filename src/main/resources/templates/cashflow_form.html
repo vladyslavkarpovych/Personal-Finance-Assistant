@@ -73,14 +73,7 @@
                 <option th:each="cat : ${incomeCategories}" th:value="${cat}" th:text="${cat}"></option>
             </select>
 
-            <label class="block font-medium mb-1">Custom Income Category:</label>
-            <select id="customIncomeCategory" th:field="*{customIncomeCategoryName}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">-- Select Custom --</option>
-                <option th:each="cat : ${customIncomeCategories}" th:value="${cat.name}" th:text="${cat.name}"></option>
-            </select>
-
-            <label for="newCustomIncomeCategory" class="block font-medium mb-1">New custom income category:</label>
+            <label for="newCustomIncomeCategory" class="block font-medium mb-1">Custom Income Category:</label>
             <input id="newCustomIncomeCategory" type="text" th:field="*{newCustomIncomeCategoryName}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
@@ -95,14 +88,7 @@
                 <option th:each="cat : ${expenseCategories}" th:value="${cat}" th:text="${cat}"></option>
             </select>
 
-            <label class="block font-medium mb-1">Custom Expense Category:</label>
-            <select id="customExpenseCategory" th:field="*{customExpenseCategoryName}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">-- Select Custom --</option>
-                <option th:each="cat : ${customExpenseCategories}" th:value="${cat.name}" th:text="${cat.name}"></option>
-            </select>
-
-            <label for="newCustomExpenseCategory" class="block font-medium mb-1">New custom expense category:</label>
+            <label for="newCustomExpenseCategory" class="block font-medium mb-1">Custom Expense Category:</label>
             <input id="newCustomExpenseCategory" type="text" th:field="*{newCustomExpenseCategoryName}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>

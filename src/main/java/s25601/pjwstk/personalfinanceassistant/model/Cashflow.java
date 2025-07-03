@@ -45,16 +45,12 @@ public class Cashflow {
     @Enumerated(EnumType.STRING)
     private ExpenseCategory expenseCategory;
 
-    @Column(nullable = true)
     private String customIncomeCategoryName;
 
-    @Column(nullable = true)
     private String customExpenseCategoryName;
 
-    @Column(nullable = true)
     private String newCustomIncomeCategoryName;
 
-    @Column(nullable = true)
     private String newCustomExpenseCategoryName;
 
     @ManyToOne(optional = false)

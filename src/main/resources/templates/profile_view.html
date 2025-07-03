@@ -10,7 +10,9 @@
 <!-- Header -->
 <header class="max-w-6xl mx-auto mb-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-indigo-600">👤 Your Profile</h1>
+        <h1 class="text-3xl font-bold text-indigo-600">
+            👤 <span th:text="${user.username}"></span>
+        </h1>
         <a href="/" class="text-sm text-indigo-500 hover:underline">Logout</a>
     </div>
     <div class="bg-white p-4 rounded-lg shadow">
