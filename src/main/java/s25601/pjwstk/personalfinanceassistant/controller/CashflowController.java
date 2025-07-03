@@ -269,8 +269,8 @@ public class CashflowController {
             model.addAttribute("accounts", getAccessibleAccounts(user));
             model.addAttribute("incomeCategories", IncomeCategory.values());
             model.addAttribute("expenseCategories", ExpenseCategory.values());
-            model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
-            model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
+//            model.addAttribute("customIncomeCategories", customIncomeCategoryRepository.findByUserId(user.getId()));
+//            model.addAttribute("customExpenseCategories", customExpenseCategoryRepository.findByUserId(user.getId()));
             model.addAttribute("newCustomIncomeCategoryName", cashflow.getNewCustomIncomeCategoryName());
             model.addAttribute("newCustomExpenseCategoryName", cashflow.getNewCustomExpenseCategoryName());
             return "cashflow_form";
@@ -343,22 +343,6 @@ public class CashflowController {
                                  Model model) {
 
         User user = userService.getAuthenticatedUser();
-
-        // Check duplicate custom income category name if present in update
-        if (updatedCashflow.getCustomIncomeCategoryName() != null && !updatedCashflow.getCustomIncomeCategoryName().isBlank()) {
-            boolean exists = customIncomeCategoryRepository.existsByNameAndUserId(updatedCashflow.getCustomIncomeCategoryName().trim(), user.getId());
-            if (exists) {
-                throw new DuplicateCategoryException("Custom income category '" + updatedCashflow.getCustomIncomeCategoryName().trim() + "' already exists.");
-            }
-        }
-
-        // Check duplicate custom expense category name if present in update
-        if (updatedCashflow.getCustomExpenseCategoryName() != null && !updatedCashflow.getCustomExpenseCategoryName().isBlank()) {
-            boolean exists = customExpenseCategoryRepository.existsByNameAndUserId(updatedCashflow.getCustomExpenseCategoryName().trim(), user.getId());
-            if (exists) {
-                throw new DuplicateCategoryException("Custom expense category '" + updatedCashflow.getCustomExpenseCategoryName().trim() + "' already exists.");
-            }
-        }
 
         if (result.hasErrors()) {
             model.addAttribute("types", CashflowType.values());
