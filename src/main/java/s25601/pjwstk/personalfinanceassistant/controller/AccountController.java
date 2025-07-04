@@ -52,6 +52,7 @@ public class AccountController {
             Set<User> allRelatedUsers = new HashSet<>(account.getSharedUsers());
             allRelatedUsers.add(account.getUser());
 
+            // Filter out the current user — we don’t want to include their name in the list.
             String sharedNames = allRelatedUsers.stream()
                     .filter(u -> !u.getId().equals(currentUser.getId()))
                     .map(User::getUsername)

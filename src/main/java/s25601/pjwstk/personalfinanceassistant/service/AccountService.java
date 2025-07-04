@@ -25,8 +25,6 @@ public class AccountService {
     @Autowired
     private UserService userService;
 
-
-
     public List<Account> getAccessibleAccounts(User user) {
         List<Account> ownedAccounts = accountRepository.findByUserId(user.getId());
         List<Account> sharedAccounts = accountRepository.findBySharedUsersId(user.getId());
