@@ -12,10 +12,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "goal_type")
 @Getter
 @Setter
-
-public class Goal implements Comparable<Goal> {
+public abstract class Goal implements Comparable<Goal> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // primary key

@@ -129,23 +129,74 @@ public class ProfileController {
     }
 
     @GetMapping("/goals/add")
-    public String showAddGoalForm(Model model) {
-        model.addAttribute("financialGoal", new Goal());
+    public String showAddGoalForm(@RequestParam(name = "type", defaultValue = "OTHER") String type, Model model) {
+        Goal financialGoal;
+
+        switch (type.toUpperCase()) {
+            case "INVESTMENT":
+                financialGoal = new InvestmentGoal();
+                break;
+            case "DEBT":
+                financialGoal = new DebtRepaymentGoal();
+                break;
+            default:
+                financialGoal = new OtherGoal();
+        }
+
+        model.addAttribute("financialGoal", financialGoal);
+        model.addAttribute("goalType", type.toUpperCase());
         return "goal_form";
     }
 
     @PostMapping("/goals/add")
-    public String addGoal(@Valid @ModelAttribute Goal financialGoal,
+    public String addGoal(@Valid @ModelAttribute("financialGoal") Goal financialGoal,
                           BindingResult result,
+                          @RequestParam("goalType") String goalType,
+                          @RequestParam(required = false) String riskLevel,
+                          @RequestParam(required = false) BigDecimal expectedReturn,
+                          @RequestParam(required = false) BigDecimal interestRate,
+                          @RequestParam(required = false) String lenderName,
                           Model model) {
+
         User user = userService.getAuthenticatedUser();
-        financialGoal.setUser(user);
 
         if (result.hasErrors()) {
+            model.addAttribute("goalType", goalType); // re-populate the type for form
             return "goal_form";
         }
 
-        goalRepository.save(financialGoal);
+        Goal newGoal;
+
+        // Create appropriate subclass based on goalType
+        switch (goalType) {
+            case "INVESTMENT":
+                InvestmentGoal investmentGoal = new InvestmentGoal();
+                investmentGoal.setRiskLevel(riskLevel);
+                investmentGoal.setExpectedReturn(expectedReturn);
+                newGoal = investmentGoal;
+                break;
+
+            case "DEBT_REPAYMENT":
+                DebtRepaymentGoal debtGoal = new DebtRepaymentGoal();
+                debtGoal.setInterestRate(interestRate);
+                debtGoal.setLenderName(lenderName);
+                newGoal = debtGoal;
+                break;
+
+            default:
+                newGoal = new OtherGoal();
+                break;
+        }
+
+        // Set common fields
+        newGoal.setName(financialGoal.getName());
+        newGoal.setTargetAmount(financialGoal.getTargetAmount());
+        newGoal.setDueDate(financialGoal.getDueDate());
+        newGoal.setCurrentAmount(financialGoal.getCurrentAmount());
+        newGoal.setUser(user);
+
+        goalRepository.save(newGoal);
+
         return "redirect:/profile";
     }
 
@@ -156,32 +207,85 @@ public class ProfileController {
         Goal goal = goalRepository.findById(id)
                 .filter(g -> g.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid goal Id:" + id));
+        String goalType = "OTHER"; // default
+        if (goal instanceof InvestmentGoal) {
+            goalType = "INVESTMENT";
+        } else if (goal instanceof DebtRepaymentGoal) {
+            goalType = "DEBT";
+        }
         model.addAttribute("financialGoal", goal);
+        model.addAttribute("goalType", goalType);
         return "goal_form";
     }
-
-    // Update goal
     @PostMapping("/goals/edit/{id}")
-    public String updateGoal(@PathVariable("id") Long id,
+    public String updateGoal(@PathVariable Long id,
                              @Valid @ModelAttribute("financialGoal") Goal financialGoal,
-                             BindingResult result, Model model) {
-        User user = userService.getAuthenticatedUser();
+                             BindingResult result,
+                             @RequestParam("goalType") String goalType,
+                             @RequestParam(required = false) String riskLevel,
+                             @RequestParam(required = false) BigDecimal expectedReturn,
+                             @RequestParam(required = false) BigDecimal interestRate,
+                             @RequestParam(required = false) String lenderName,
+                             Model model) {
 
         if (result.hasErrors()) {
+            model.addAttribute("goalType", goalType);
             return "goal_form";
         }
+
+        User user = userService.getAuthenticatedUser();
 
         Goal existingGoal = goalRepository.findById(id)
                 .filter(g -> g.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid goal Id:" + id));
 
-        // Update fields manually to avoid changing user and id
-        existingGoal.setName(financialGoal.getName());
-        existingGoal.setTargetAmount(financialGoal.getTargetAmount());
-        existingGoal.setDueDate(financialGoal.getDueDate());
-        existingGoal.setCurrentAmount(financialGoal.getCurrentAmount());
+        Goal updatedGoal;
 
-        goalRepository.save(existingGoal);
+        switch (goalType) {
+            case "INVESTMENT":
+                if (!(existingGoal instanceof InvestmentGoal)) {
+                    updatedGoal = new InvestmentGoal();
+                    updatedGoal.setId(existingGoal.getId());
+                    updatedGoal.setUser(user);
+                } else {
+                    updatedGoal = existingGoal;
+                }
+                InvestmentGoal investmentGoal = (InvestmentGoal) updatedGoal;
+                investmentGoal.setRiskLevel(riskLevel);
+                investmentGoal.setExpectedReturn(expectedReturn);
+                break;
+
+            case "DEBT_REPAYMENT":
+                if (!(existingGoal instanceof DebtRepaymentGoal)) {
+                    updatedGoal = new DebtRepaymentGoal();
+                    updatedGoal.setId(existingGoal.getId());
+                    updatedGoal.setUser(user);
+                } else {
+                    updatedGoal = existingGoal;
+                }
+                DebtRepaymentGoal debtGoal = (DebtRepaymentGoal) updatedGoal;
+                debtGoal.setInterestRate(interestRate);
+                debtGoal.setLenderName(lenderName);
+                break;
+
+            default:
+                if (!(existingGoal instanceof OtherGoal)) {
+                    updatedGoal = new OtherGoal();
+                    updatedGoal.setId(existingGoal.getId());
+                    updatedGoal.setUser(user);
+                } else {
+                    updatedGoal = existingGoal;
+                }
+                break;
+        }
+
+        // Set common fields
+        updatedGoal.setName(financialGoal.getName());
+        updatedGoal.setTargetAmount(financialGoal.getTargetAmount());
+        updatedGoal.setDueDate(financialGoal.getDueDate());
+        updatedGoal.setCurrentAmount(financialGoal.getCurrentAmount());
+
+        goalRepository.save(updatedGoal);
 
         return "redirect:/profile";
     }
